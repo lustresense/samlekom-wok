@@ -17,10 +17,14 @@ npm --version     # Should be 8+
 npm install
 ```
 
-### 3. Start Development Server
+### 3. Start Local Demo (Frontend + Local API SQLite)
 ```bash
 npm run dev
 ```
+
+`npm run dev` sekarang otomatis menjalankan:
+- Vite frontend di `http://localhost:5173`
+- Local API di `http://127.0.0.1:8000/make-server-32aa5c5c`
 
 ### 4. Open in Browser
 ```
@@ -232,7 +236,7 @@ After setup, verify these work:
 
 1. **Read Full Docs**: Check `README_SIMRP.md`
 2. **User Manual**: Read `PETUNJUK_PENGGUNAAN.md` (Bahasa Indonesia)
-3. **System Overview**: Check `SYSTEM_SUMMARY.md`
+3. **System Overview**: Check `../status/SYSTEM_SUMMARY.md`
 4. **Test All Flows**: Use the testing scenarios above
 5. **Customize**: Modify colors, text, or add features
 6. **Deploy**: Follow deployment guide in README
@@ -244,7 +248,7 @@ After setup, verify these work:
 ### Check Documentation
 - Technical: `README_SIMRP.md`
 - User Guide: `PETUNJUK_PENGGUNAAN.md`
-- System Specs: `SYSTEM_SUMMARY.md`
+- System Specs: `../status/SYSTEM_SUMMARY.md`
 
 ### Common Resources
 - Supabase Docs: https://supabase.com/docs

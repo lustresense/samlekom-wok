@@ -1,11 +1,17 @@
+# SIMRP (Figmasimrp)
 
-  # Grand Design Documentation
+Dokumentasi proyek sudah dirapikan ke folder `docs/`.
 
-  This is a code bundle for Grand Design Documentation. The original project is available at https://www.figma.com/design/q0YbMJLwl6iK84wKcMWh1o/Grand-Design-Documentation.
+## Jalankan Project
 
-  ## Running the code
+1. `npm i`
+2. `npm run dev`
 
-  Run `npm i` to install the dependencies.
+## Lokasi Dokumentasi
 
-  Run `npm run dev` to start the development server.
-  
+- Index dokumentasi: `docs/README.md`
+- Arsitektur: `docs/architecture/`
+- Guide penggunaan: `docs/guides/`
+- Status implementasi: `docs/status/`
+- Logbook: `docs/logbook/`
+- Legal/atribusi: `docs/legal/`

@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/app/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/components/ui/card';
 import { Badge } from '@/app/components/ui/badge';
 import { CheckCircle, XCircle, FileText, Clock, LayoutGrid, ShieldCheck, Lightbulb, BarChart3, Users } from 'lucide-react';
-import { projectId, publicAnonKey } from '/utils/supabase/info';
+import { apiBaseUrl } from '/utils/supabase/info';
 import { toast } from 'sonner';
 import { FloatingNavbar } from '@/app/components/ui/FloatingNavbar';
 import { Input } from '@/app/components/ui/input';
@@ -18,13 +18,36 @@ interface ModeratorDashboardProps {
   moderatorTier: 1 | 2 | 3;
 }
 
+interface GeoKelurahan {
+  id: number;
+  name: string;
+  kodepos: string[];
+}
+
+interface GeoKecamatan {
+  id: number;
+  name: string;
+  kelurahan: GeoKelurahan[];
+}
+
 export function ModeratorDashboard({ user, authToken, onLogout, onNavigate, currentView, onViewChange, moderatorTier }: ModeratorDashboardProps) {
   const [reports, setReports] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [events, setEvents] = useState<any[]>([]);
-  const [recommendations, setRecommendations] = useState<any[]>([]);
-  const [rekomForm, setRekomForm] = useState({ title: '', summary: '', suggestedActions: '' });
-  const [submittingRekom, setSubmittingRekom] = useState(false);
+  const [geoOptions, setGeoOptions] = useState<GeoKecamatan[]>([]);
+  const [eventForm, setEventForm] = useState({
+    title: '',
+    description: '',
+    pillar: '1',
+    scopeType: 'kelurahan',
+    kecamatanId: '',
+    kelurahanId: '',
+    date: '',
+    time: '',
+    location: '',
+    quota: 0
+  });
+  const [submittingEvent, setSubmittingEvent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [activePage, setActivePage] = useState<string>('overview');
 
@@ -37,25 +60,95 @@ export function ModeratorDashboard({ user, authToken, onLogout, onNavigate, curr
     setActivePage(next);
   }, [moderatorTier]);
 
+  useEffect(() => {
+    if (!geoOptions.length || eventForm.kecamatanId) {
+      return;
+    }
+    const kecamatanByName = geoOptions.find((k) => k.name === user?.kecamatan);
+    if (!kecamatanByName) {
+      return;
+    }
+    const kelurahanByName = kecamatanByName.kelurahan.find((k) => k.name === user?.kelurahan);
+    setEventForm((prev) => ({
+      ...prev,
+      kecamatanId: String(kecamatanByName.id),
+      kelurahanId: kelurahanByName ? String(kelurahanByName.id) : ''
+    }));
+  }, [geoOptions, user?.kecamatan, user?.kelurahan, eventForm.kecamatanId]);
+
+  const requireToken = () => {
+    if (authToken) {
+      return true;
+    }
+    toast.error('Sesi tidak valid. Silakan login ulang.');
+    onLogout();
+    return false;
+  };
+
+  const handleUnauthorized = (response: Response) => {
+    if (response.status !== 401) {
+      return false;
+    }
+    toast.error('Sesi berakhir. Login ulang untuk melanjutkan.');
+    onLogout();
+    return true;
+  };
+
   const fetchData = async () => {
+    if (!requireToken()) {
+      return;
+    }
     setLoading(true);
     try {
-      await Promise.all([fetchReports(), fetchUsers(), fetchEvents(), fetchRecommendations()]);
+      await Promise.all([fetchReports(), fetchUsers(), fetchEvents(), fetchGeoOptions()]);
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchReports = async () => {
+  const fetchGeoOptions = async () => {
+    if (!authToken) {
+      return;
+    }
     try {
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-32aa5c5c/reports`,
+        `${apiBaseUrl}/geo/options`,
         {
           headers: {
-            'Authorization': `Bearer ${authToken || publicAnonKey}`
+            'Authorization': `Bearer ${authToken}`
           }
         }
       );
+      if (handleUnauthorized(response)) {
+        return;
+      }
+      if (!response.ok) {
+        throw new Error(`Gagal memuat wilayah (${response.status})`);
+      }
+      const data = await response.json();
+      setGeoOptions(data.kecamatan || []);
+    } catch (error) {
+      console.error('Error fetching geo options:', error);
+      toast.error('Data kecamatan/kelurahan belum termuat. Pastikan API lokal aktif.');
+    }
+  };
+
+  const fetchReports = async () => {
+    if (!authToken) {
+      return;
+    }
+    try {
+      const response = await fetch(
+        `${apiBaseUrl}/reports`,
+        {
+          headers: {
+            'Authorization': `Bearer ${authToken}`
+          }
+        }
+      );
+      if (handleUnauthorized(response)) {
+        return;
+      }
 
       if (response.ok) {
         const data = await response.json();
@@ -67,16 +160,22 @@ export function ModeratorDashboard({ user, authToken, onLogout, onNavigate, curr
   };
 
   const fetchUsers = async () => {
+    if (!authToken) {
+      return;
+    }
     try {
       const filter = moderatorTier === 1 ? `?kampungId=${user?.kampungId || ''}` : moderatorTier === 2 ? `?role=user` : '';
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-32aa5c5c/users${filter}`,
+        `${apiBaseUrl}/users${filter}`,
         {
           headers: {
-            'Authorization': `Bearer ${authToken || publicAnonKey}`
+            'Authorization': `Bearer ${authToken}`
           }
         }
       );
+      if (handleUnauthorized(response)) {
+        return;
+      }
 
       if (response.ok) {
         const data = await response.json();
@@ -88,15 +187,21 @@ export function ModeratorDashboard({ user, authToken, onLogout, onNavigate, curr
   };
 
   const fetchEvents = async () => {
+    if (!authToken) {
+      return;
+    }
     try {
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-32aa5c5c/events`,
+        `${apiBaseUrl}/events`,
         {
           headers: {
-            'Authorization': `Bearer ${authToken || publicAnonKey}`
+            'Authorization': `Bearer ${authToken}`
           }
         }
       );
+      if (handleUnauthorized(response)) {
+        return;
+      }
 
       if (response.ok) {
         const data = await response.json();
@@ -107,35 +212,18 @@ export function ModeratorDashboard({ user, authToken, onLogout, onNavigate, curr
     }
   };
 
-  const fetchRecommendations = async () => {
-    try {
-      const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-32aa5c5c/recommendations`,
-        {
-          headers: {
-            'Authorization': `Bearer ${authToken || publicAnonKey}`
-          }
-        }
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        setRecommendations(data.recommendations || []);
-      }
-    } catch (error) {
-      console.error('Error fetching recommendations:', error);
-    }
-  };
-
   const handleVerifyReport = async (reportId: string, approved: boolean) => {
+    if (!requireToken()) {
+      return;
+    }
     try {
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-32aa5c5c/reports/${reportId}/verify`,
+        `${apiBaseUrl}/reports/${reportId}/verify`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authToken || publicAnonKey}`
+            'Authorization': `Bearer ${authToken}`
           },
           body: JSON.stringify({
             approved,
@@ -143,6 +231,9 @@ export function ModeratorDashboard({ user, authToken, onLogout, onNavigate, curr
           })
         }
       );
+      if (handleUnauthorized(response)) {
+        return;
+      }
 
       if (response.ok) {
         toast.success(approved ? 'Laporan disetujui' : 'Laporan ditolak');
@@ -157,18 +248,24 @@ export function ModeratorDashboard({ user, authToken, onLogout, onNavigate, curr
   };
 
   const handleEventApproval = async (eventId: string, approved: boolean) => {
+    if (!requireToken()) {
+      return;
+    }
     try {
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-32aa5c5c/events/${eventId}/approval`,
+        `${apiBaseUrl}/events/${eventId}/approval`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authToken || publicAnonKey}`
+            'Authorization': `Bearer ${authToken}`
           },
           body: JSON.stringify({ approved })
         }
       );
+      if (handleUnauthorized(response)) {
+        return;
+      }
 
       if (response.ok) {
         toast.success(approved ? 'Event disetujui' : 'Event ditolak');
@@ -182,46 +279,86 @@ export function ModeratorDashboard({ user, authToken, onLogout, onNavigate, curr
     }
   };
 
-  const handleSubmitRecommendation = async () => {
-    if (!rekomForm.title.trim()) {
-      toast.error('Judul rekomendasi wajib diisi');
+  const handleCreateTier1Event = async () => {
+    if (!requireToken()) {
       return;
     }
-    setSubmittingRekom(true);
+    if (!eventForm.title.trim() || !eventForm.date) {
+      toast.error('Judul dan tanggal wajib diisi');
+      return;
+    }
+    if (!eventForm.kecamatanId) {
+      toast.error('Kecamatan wajib dipilih');
+      return;
+    }
+    if (eventForm.scopeType === 'kelurahan' && !eventForm.kelurahanId) {
+      toast.error('Untuk skala kelurahan, kelurahan wajib dipilih');
+      return;
+    }
+    setSubmittingEvent(true);
     try {
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-32aa5c5c/recommendations`,
+        `${apiBaseUrl}/events`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authToken || publicAnonKey}`
+            'Authorization': `Bearer ${authToken}`
           },
-          body: JSON.stringify(rekomForm)
+          body: JSON.stringify({
+            title: eventForm.title,
+            description: eventForm.description,
+            pillar: parseInt(eventForm.pillar, 10),
+            scopeType: eventForm.scopeType,
+            kecamatanId: Number(eventForm.kecamatanId),
+            kelurahanId: eventForm.scopeType === 'kelurahan' ? Number(eventForm.kelurahanId) : null,
+            date: eventForm.date,
+            time: eventForm.time,
+            location: eventForm.location,
+            quota: eventForm.quota
+          })
         }
       );
+      if (handleUnauthorized(response)) {
+        return;
+      }
 
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.error || 'Gagal menyimpan rekomendasi');
+        throw new Error(data.error || 'Gagal input kegiatan');
       }
-      toast.success('Rekomendasi tersimpan');
-      setRekomForm({ title: '', summary: '', suggestedActions: '' });
-      fetchRecommendations();
+      toast.success('Kegiatan draft berhasil dibuat');
+      setEventForm({
+        title: '',
+        description: '',
+        pillar: '1',
+        scopeType: 'kelurahan',
+        kecamatanId: '',
+        kelurahanId: '',
+        date: '',
+        time: '',
+        location: '',
+        quota: 0
+      });
+      fetchEvents();
     } catch (error: any) {
       toast.error(error.message || 'Terjadi kesalahan');
     } finally {
-      setSubmittingRekom(false);
+      setSubmittingEvent(false);
     }
   };
 
   const pendingReports = reports.filter(r => r.status === 'pending');
   const verifiedReports = reports.filter(r => r.status === 'verified');
   const draftEvents = events.filter((e) => e.status === 'draft');
+  const selectedKecamatan = geoOptions.find((k) => String(k.id) === eventForm.kecamatanId);
+  const kelurahanOptions = selectedKecamatan?.kelurahan || [];
   const visibleUsers = moderatorTier === 1
     ? users.filter((u) => u.kampungId && u.kampungId === user?.kampungId)
     : moderatorTier === 2
-      ? users.filter((u) => u.kecamatan === user?.kecamatan)
+      ? (user?.tier2Badge === 'lurah'
+          ? users.filter((u) => u.kampungId === user?.kampungId)
+          : users.filter((u) => u.kecamatan === user?.kecamatan))
       : users;
 
   return (
@@ -242,7 +379,7 @@ export function ModeratorDashboard({ user, authToken, onLogout, onNavigate, curr
           moderatorTier === 1
             ? [
                 { key: "monitor", label: "Monitoring", icon: BarChart3 },
-                { key: "rekom", label: "Rekom", icon: Lightbulb },
+                { key: "rekom", label: "Input", icon: Lightbulb },
                 { key: "overview", label: "Ringkas", icon: LayoutGrid }
               ]
             : moderatorTier === 2
@@ -265,7 +402,9 @@ export function ModeratorDashboard({ user, authToken, onLogout, onNavigate, curr
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-xl font-bold">Moderator Dashboard</h1>
-              <p className="text-sm text-cyan-100">Tier {moderatorTier}</p>
+              <p className="text-sm text-cyan-100">
+                Tier {moderatorTier}{moderatorTier === 2 && user?.tier2Badge ? ` - ${String(user.tier2Badge).toUpperCase()}` : ''}
+              </p>
             </div>
             <Badge className="bg-white/20 text-white">{user?.name}</Badge>
           </div>
@@ -311,7 +450,7 @@ export function ModeratorDashboard({ user, authToken, onLogout, onNavigate, curr
               {moderatorTier === 1
                 ? 'Kampung binaan'
                 : moderatorTier === 2
-                  ? 'Wilayah kecamatan'
+                  ? (user?.tier2Badge === 'lurah' ? 'Wilayah kelurahan (Lurah)' : 'Wilayah kecamatan (Camat)')
                   : 'Seluruh kota'}
             </CardDescription>
           </CardHeader>
@@ -324,7 +463,7 @@ export function ModeratorDashboard({ user, authToken, onLogout, onNavigate, curr
                   <div key={u.id} className="flex items-center justify-between p-3 rounded-lg bg-cyan-50">
                     <div>
                       <div className="font-semibold text-sm">{u.name}</div>
-                      <div className="text-xs text-gray-500">{u.kelurahan} • {u.kecamatan}</div>
+                      <div className="text-xs text-gray-500">{u.kelurahan} - {u.kecamatan}</div>
                     </div>
                     <Badge className="bg-cyan-600 text-white">{u.points || 0} XP</Badge>
                   </div>
@@ -453,7 +592,7 @@ export function ModeratorDashboard({ user, authToken, onLogout, onNavigate, curr
                 <BarChart3 className="w-5 h-5" />
                 Monitoring Kampung Binaan
               </CardTitle>
-              <CardDescription>Tier 1 fokus monitoring & rekomendasi.</CardDescription>
+              <CardDescription>Tier 1 fokus monitoring dan input kegiatan draft.</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="text-sm text-gray-500">Data monitoring kampung akan muncul di sini.</div>
@@ -466,9 +605,9 @@ export function ModeratorDashboard({ user, authToken, onLogout, onNavigate, curr
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Lightbulb className="w-5 h-5" />
-                Rekomendasi ASN
+                Input Kegiatan Tier 1
               </CardTitle>
-              <CardDescription>Catatan rekomendasi berbasis data.</CardDescription>
+              <CardDescription>ASN Pendamping hanya bisa input kegiatan sebagai draft.</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -476,44 +615,151 @@ export function ModeratorDashboard({ user, authToken, onLogout, onNavigate, curr
                   <div>
                     <label className="text-sm font-semibold text-gray-700">Judul</label>
                     <Input
-                      value={rekomForm.title}
-                      onChange={(e) => setRekomForm(prev => ({ ...prev, title: e.target.value }))}
-                      placeholder="Contoh: Optimalisasi pilar ekonomi RW 05"
+                      value={eventForm.title}
+                      onChange={(e) => setEventForm(prev => ({ ...prev, title: e.target.value }))}
+                      placeholder="Contoh: Kerja Bakti RW 05"
                     />
                   </div>
                   <div>
-                    <label className="text-sm font-semibold text-gray-700">Ringkasan</label>
+                    <label className="text-sm font-semibold text-gray-700">Deskripsi</label>
                     <Input
-                      value={rekomForm.summary}
-                      onChange={(e) => setRekomForm(prev => ({ ...prev, summary: e.target.value }))}
-                      placeholder="Ringkasan rekomendasi..."
+                      value={eventForm.description}
+                      onChange={(e) => setEventForm(prev => ({ ...prev, description: e.target.value }))}
+                      placeholder="Deskripsi singkat kegiatan"
                     />
                   </div>
                   <div>
-                    <label className="text-sm font-semibold text-gray-700">Usulan Tindak Lanjut</label>
+                    <label className="text-sm font-semibold text-gray-700">Pilar</label>
+                    <div className="grid grid-cols-2 gap-2 mt-1">
+                      {[
+                        { id: '1', label: 'Lingkungan' },
+                        { id: '2', label: 'Ekonomi' },
+                        { id: '3', label: 'Kemasyarakatan' },
+                        { id: '4', label: 'Sosial Budaya' }
+                      ].map((pillar) => (
+                        <Button
+                          key={pillar.id}
+                          type="button"
+                          variant={eventForm.pillar === pillar.id ? 'default' : 'outline'}
+                          className={eventForm.pillar === pillar.id ? 'bg-cyan-600 text-white hover:bg-cyan-700' : ''}
+                          onClick={() => setEventForm(prev => ({ ...prev, pillar: pillar.id }))}
+                        >
+                          {pillar.label}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-semibold text-gray-700">Skala Kegiatan</label>
+                    <div className="grid grid-cols-2 gap-2 mt-1">
+                      <Button
+                        type="button"
+                        variant={eventForm.scopeType === 'kelurahan' ? 'default' : 'outline'}
+                        className={eventForm.scopeType === 'kelurahan' ? 'bg-cyan-600 text-white hover:bg-cyan-700' : ''}
+                        onClick={() => setEventForm(prev => ({ ...prev, scopeType: 'kelurahan' }))}
+                      >
+                        Kelurahan
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={eventForm.scopeType === 'kecamatan' ? 'default' : 'outline'}
+                        className={eventForm.scopeType === 'kecamatan' ? 'bg-cyan-600 text-white hover:bg-cyan-700' : ''}
+                        onClick={() => setEventForm(prev => ({ ...prev, scopeType: 'kecamatan', kelurahanId: '' }))}
+                      >
+                        Kecamatan
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-sm font-semibold text-gray-700">Kecamatan</label>
+                      <select
+                        className="mt-1 w-full rounded-md border border-gray-300 h-10 px-3 text-sm"
+                        value={eventForm.kecamatanId}
+                        onChange={(e) => setEventForm(prev => ({ ...prev, kecamatanId: e.target.value, kelurahanId: '' }))}
+                      >
+                        <option value="">Pilih kecamatan</option>
+                        {geoOptions.map((kecamatan) => (
+                          <option key={kecamatan.id} value={String(kecamatan.id)}>
+                            {kecamatan.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    {eventForm.scopeType === 'kelurahan' && (
+                      <div>
+                        <label className="text-sm font-semibold text-gray-700">Kelurahan</label>
+                        <select
+                          className="mt-1 w-full rounded-md border border-gray-300 h-10 px-3 text-sm"
+                          value={eventForm.kelurahanId}
+                          onChange={(e) => setEventForm(prev => ({ ...prev, kelurahanId: e.target.value }))}
+                        >
+                          <option value="">Pilih kelurahan</option>
+                          {kelurahanOptions.map((kelurahan: GeoKelurahan) => (
+                            <option key={kelurahan.id} value={String(kelurahan.id)}>
+                              {kelurahan.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-sm font-semibold text-gray-700">Tanggal</label>
+                      <Input
+                        type="date"
+                        value={eventForm.date}
+                        onChange={(e) => setEventForm(prev => ({ ...prev, date: e.target.value }))}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-semibold text-gray-700">Waktu</label>
+                      <Input
+                        value={eventForm.time}
+                        onChange={(e) => setEventForm(prev => ({ ...prev, time: e.target.value }))}
+                        placeholder="07:00"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-semibold text-gray-700">Lokasi</label>
                     <Input
-                      value={rekomForm.suggestedActions}
-                      onChange={(e) => setRekomForm(prev => ({ ...prev, suggestedActions: e.target.value }))}
-                      placeholder="Langkah singkat yang disarankan"
+                      value={eventForm.location}
+                      onChange={(e) => setEventForm(prev => ({ ...prev, location: e.target.value }))}
+                      placeholder="Balai RW / aula kampung"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-semibold text-gray-700">Kuota</label>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={String(eventForm.quota)}
+                      onChange={(e) => setEventForm(prev => ({ ...prev, quota: Number(e.target.value || 0) }))}
+                      placeholder="0"
                     />
                   </div>
                   <Button
-                    onClick={handleSubmitRecommendation}
-                    disabled={submittingRekom}
+                    onClick={handleCreateTier1Event}
+                    disabled={submittingEvent}
                     className="bg-cyan-600 text-white hover:bg-cyan-700"
                   >
-                    {submittingRekom ? 'Menyimpan...' : 'Simpan Rekomendasi'}
+                    {submittingEvent ? 'Menyimpan...' : 'Simpan Draft Kegiatan'}
                   </Button>
                 </div>
 
                 <div className="space-y-2">
-                  {recommendations.length === 0 ? (
-                    <div className="text-sm text-gray-500">Belum ada rekomendasi terbaru.</div>
+                  {draftEvents.length === 0 ? (
+                    <div className="text-sm text-gray-500">Belum ada draft kegiatan terbaru.</div>
                   ) : (
-                    recommendations.slice(0, 5).map((rec) => (
-                      <div key={rec.id} className="p-3 rounded-lg bg-cyan-50">
-                        <div className="font-semibold text-sm">{rec.title}</div>
-                        <div className="text-xs text-gray-600">{rec.summary || 'Belum ada ringkasan.'}</div>
+                    draftEvents.slice(0, 5).map((event) => (
+                      <div key={event.id} className="p-3 rounded-lg bg-cyan-50">
+                        <div className="font-semibold text-sm">{event.title}</div>
+                        <div className="text-xs text-gray-600">
+                          {event.scopeType === 'kecamatan' ? 'Skala Kecamatan' : 'Skala Kelurahan'} - {event.kecamatan}{event.kelurahan ? ` / ${event.kelurahan}` : ''}
+                        </div>
+                        <div className="text-xs text-gray-600">{event.date || 'Tanggal belum diatur'}</div>
                       </div>
                     ))
                   )}
@@ -542,7 +788,9 @@ export function ModeratorDashboard({ user, authToken, onLogout, onNavigate, curr
                       <div className="flex items-start justify-between gap-4">
                         <div>
                           <div className="font-semibold">{event.title}</div>
-                          <div className="text-xs text-gray-500">{event.kelurahan} • {event.kecamatan}</div>
+                          <div className="text-xs text-gray-500">
+                            {event.scopeType === 'kecamatan' ? 'Skala Kecamatan' : 'Skala Kelurahan'} - {event.kecamatan}{event.kelurahan ? ` / ${event.kelurahan}` : ''}
+                          </div>
                           <div className="text-xs text-gray-500">{event.date}</div>
                         </div>
                         <Badge className="bg-yellow-400 text-black">Draft</Badge>
@@ -644,3 +892,4 @@ export function ModeratorDashboard({ user, authToken, onLogout, onNavigate, curr
     </div>
   );
 }
+

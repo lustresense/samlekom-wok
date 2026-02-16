@@ -24,7 +24,7 @@ import {
   X
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { projectId, publicAnonKey } from '/utils/supabase/info';
+import { apiBaseUrl, publicAnonKey } from '/utils/supabase/info';
 import { getAvailableBadgesForArea, canAssignBadge } from '@/data/validatedBadges';
 import { getAllLevelsByRole } from '@/data/levelingSystem';
 
@@ -65,7 +65,7 @@ export function AdminGodMode({ adminUser, authToken }: AdminGodModeProps) {
     setLoading(true);
     try {
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-32aa5c5c/users`,
+        `${apiBaseUrl}/users`,
         {
           headers: {
             'Authorization': `Bearer ${authToken || publicAnonKey}`
@@ -87,7 +87,7 @@ export function AdminGodMode({ adminUser, authToken }: AdminGodModeProps) {
   const fetchTemporaryAdjustments = async () => {
     try {
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-32aa5c5c/admin/temporary-adjustments`,
+        `${apiBaseUrl}/admin/temporary-adjustments`,
         {
           headers: {
             'Authorization': `Bearer ${authToken || publicAnonKey}`
@@ -109,7 +109,7 @@ export function AdminGodMode({ adminUser, authToken }: AdminGodModeProps) {
     
     try {
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-32aa5c5c/admin/assign-role`,
+        `${apiBaseUrl}/admin/assign-role`,
         {
           method: 'POST',
           headers: {
@@ -141,7 +141,7 @@ export function AdminGodMode({ adminUser, authToken }: AdminGodModeProps) {
     
     try {
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-32aa5c5c/admin/remove-role`,
+        `${apiBaseUrl}/admin/remove-role`,
         {
           method: 'POST',
           headers: {
@@ -181,7 +181,7 @@ export function AdminGodMode({ adminUser, authToken }: AdminGodModeProps) {
     
     try {
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-32aa5c5c/admin/add-temporary-points`,
+        `${apiBaseUrl}/admin/add-temporary-points`,
         {
           method: 'POST',
           headers: {
@@ -219,7 +219,7 @@ export function AdminGodMode({ adminUser, authToken }: AdminGodModeProps) {
     
     try {
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-32aa5c5c/admin/add-temporary-badge`,
+        `${apiBaseUrl}/admin/add-temporary-badge`,
         {
           method: 'POST',
           headers: {

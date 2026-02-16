@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
-import { projectId, publicAnonKey } from '/utils/supabase/info';
 import { LandingPage } from '@/app/components/LandingPage';
 import { LoginPage } from '@/app/components/LoginPage';
 import { RegisterPage } from '@/app/components/RegisterPage';
 import { UserDashboard } from '@/app/components/UserDashboard';
 import { AdminDashboard } from '@/app/components/AdminDashboard';
 import { ModeratorDashboard } from '@/app/components/ModeratorDashboard';
+import { AdminLoginPage } from '@/app/components/AdminLoginPage';
 import { Toaster } from 'sonner';
 
-type Page = 'landing' | 'login' | 'register' | 'dashboard';
+type Page = 'landing' | 'login' | 'register' | 'admin-login' | 'dashboard';
 
 interface User {
   id?: string;
@@ -74,6 +74,41 @@ export default function App() {
     setLoading(false);
   }, []);
 
+  useEffect(() => {
+    const syncRoute = () => {
+      const path = window.location.pathname;
+      if (path === '/admin') {
+        if (currentUser?.role === 'admin') {
+          setCurrentPage('dashboard');
+        } else {
+          setCurrentPage('admin-login');
+        }
+        return;
+      }
+      if (path === '/login') {
+        setCurrentPage('login');
+        return;
+      }
+      if (path === '/register') {
+        setCurrentPage('register');
+        return;
+      }
+      if (path === '/app') {
+        if (currentUser) {
+          setCurrentPage('dashboard');
+        } else {
+          setCurrentPage('login');
+        }
+        return;
+      }
+      setCurrentPage('landing');
+    };
+
+    syncRoute();
+    window.addEventListener('popstate', syncRoute);
+    return () => window.removeEventListener('popstate', syncRoute);
+  }, [currentUser]);
+
   // Check if user can access a view
   const canAccessView = (userRole: string, view: 'admin' | 'moderator' | 'user'): boolean => {
     if (view === 'user') return true;
@@ -94,6 +129,7 @@ export default function App() {
     localStorage.setItem('simrp_current_view', initialView);
     
     setCurrentPage('dashboard');
+    window.history.pushState({}, '', '/app');
   };
 
   const handleLogout = () => {
@@ -105,10 +141,20 @@ export default function App() {
     localStorage.removeItem('simrp_current_view');
     localStorage.removeItem('simrp_moderator_tier');
     setCurrentPage('landing');
+    window.history.pushState({}, '', '/');
   };
 
   const navigateTo = (page: Page) => {
     setCurrentPage(page);
+    if (page === 'admin-login') {
+      window.history.pushState({}, '', '/admin');
+    } else if (page === 'login') {
+      window.history.pushState({}, '', '/login');
+    } else if (page === 'register') {
+      window.history.pushState({}, '', '/register');
+    } else if (page === 'landing') {
+      window.history.pushState({}, '', '/');
+    }
   };
 
   const handleViewChange = (view: 'admin' | 'moderator' | 'user') => {
@@ -145,6 +191,13 @@ export default function App() {
       {currentPage === 'login' && (
         <LoginPage 
           onNavigate={navigateTo} 
+          onLogin={handleLogin}
+        />
+      )}
+
+      {currentPage === 'admin-login' && (
+        <AdminLoginPage
+          onNavigate={navigateTo}
           onLogin={handleLogin}
         />
       )}

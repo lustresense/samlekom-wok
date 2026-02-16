@@ -1,15 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Calendar, TrendingUp, MapPin, Crown, Users, Home, User as UserIcon } from 'lucide-react';
 import { Button } from '@/app/components/ui/button';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/app/components/ui/dialog';
-import { Input } from '@/app/components/ui/input';
-import { Textarea } from '@/app/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/components/ui/card';
 import { Badge } from '@/app/components/ui/badge';
 import { EventList } from '@/app/components/EventList';
 import { ReportingWizard } from '@/app/components/ReportingWizard';
 import { UserProfile } from '@/app/components/UserProfile';
-import { projectId, publicAnonKey } from '/utils/supabase/info';
+import { apiBaseUrl, publicAnonKey } from '/utils/supabase/info';
 import { FloatingNavbar } from '@/app/components/ui/FloatingNavbar';
 import { toast } from 'sonner';
 
@@ -35,35 +32,21 @@ export function UserDashboard({
   const [activePage, setActivePage] = useState<'home' | 'events' | 'report' | 'profile'>('home');
   const [events, setEvents] = useState<any[]>([]);
   const [userMode, setUserMode] = useState<'relawan' | 'ksh'>(user?.isKsh ? 'ksh' : 'relawan');
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [creatingEvent, setCreatingEvent] = useState(false);
-  const [newEvent, setNewEvent] = useState({
-    title: '',
-    description: '',
-    pillar: '1',
-    date: '',
-    time: '',
-    location: '',
-    quota: 0,
-    recommendationId: ''
-  });
   const [reports, setReports] = useState<any[]>([]);
   const [kampungLeaderboard, setKampungLeaderboard] = useState<any[]>([]);
-  const [rekomendasi, setRekomendasi] = useState<any[]>([]);
 
   useEffect(() => {
     fetchEvents();
     fetchReports();
     fetchKampungLeaderboard();
-    fetchRecommendations();
   }, [userMode]);
 
   const fetchEvents = async () => {
     try {
-      const status = userMode === 'relawan' ? 'published' : undefined;
+      const status = 'published';
       const query = status ? `?status=${status}` : '';
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-32aa5c5c/events${query}`,
+        `${apiBaseUrl}/events${query}`,
         {
           headers: {
             'Authorization': `Bearer ${authToken || publicAnonKey}`
@@ -83,7 +66,7 @@ export function UserDashboard({
   const fetchReports = async () => {
     try {
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-32aa5c5c/reports?userId=${user?.id}`,
+        `${apiBaseUrl}/reports?userId=${user?.id}`,
         {
           headers: {
             'Authorization': `Bearer ${authToken || publicAnonKey}`
@@ -103,7 +86,7 @@ export function UserDashboard({
   const fetchKampungLeaderboard = async () => {
     try {
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-32aa5c5c/kampung`,
+        `${apiBaseUrl}/kampung`,
         {
           headers: {
             'Authorization': `Bearer ${authToken || publicAnonKey}`
@@ -119,98 +102,30 @@ export function UserDashboard({
     }
   };
 
-  const fetchRecommendations = async () => {
-    try {
-      const kampungId = user?.kampungId ? `?kampungId=${user.kampungId}` : '';
-      const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-32aa5c5c/recommendations${kampungId}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${authToken || publicAnonKey}`
-          }
-        }
-      );
-      if (response.ok) {
-        const data = await response.json();
-        setRekomendasi(data.recommendations || []);
-      }
-    } catch (error) {
-      console.error('Error fetching recommendations:', error);
-    }
-  };
-
-  const handleCreateEvent = async () => {
-    if (!newEvent.title || !newEvent.date || !newEvent.pillar) {
-      toast.error('Judul, pilar, dan tanggal wajib diisi.');
+  const handleCompleteEvent = async (eventId: string) => {
+    const outputSummary = window.prompt('Masukkan ringkasan output kegiatan');
+    if (!outputSummary || !outputSummary.trim()) {
+      toast.error('Ringkasan output wajib diisi.');
       return;
     }
-
-    setCreatingEvent(true);
     try {
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-32aa5c5c/events`,
+        `${apiBaseUrl}/events/${eventId}/complete`,
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${authToken || publicAnonKey}`
           },
-          body: JSON.stringify({
-            title: newEvent.title,
-            description: newEvent.description,
-            pillar: parseInt(newEvent.pillar, 10),
-            date: newEvent.date,
-            time: newEvent.time,
-            location: newEvent.location,
-            organizer: user?.name || 'KSH',
-            quota: newEvent.quota,
-            recommendationId: newEvent.recommendationId || null
-          })
-        }
-      );
-
-      const data = await response.json();
-      if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Gagal membuat event');
-      }
-
-      toast.success('Event berhasil dibuat.');
-      setIsCreateOpen(false);
-      setNewEvent({
-        title: '',
-        description: '',
-        pillar: '1',
-        date: '',
-        time: '',
-        location: '',
-        quota: 0,
-        recommendationId: ''
-      });
-      fetchEvents();
-    } catch (error: any) {
-      toast.error(error.message || 'Gagal membuat event');
-    } finally {
-      setCreatingEvent(false);
-    }
-  };
-
-  const handleCompleteEvent = async (eventId: string) => {
-    try {
-      const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-32aa5c5c/events/${eventId}/complete`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authToken || publicAnonKey}`
-          }
+          body: JSON.stringify({ outputSummary: outputSummary.trim() })
         }
       );
       if (response.ok) {
         toast.success('Event ditandai selesai');
         fetchEvents();
       } else {
-        toast.error('Gagal menandai event selesai');
+        const data = await response.json();
+        toast.error(data.error || 'Gagal menandai event selesai');
       }
     } catch (error) {
       console.error('Error completing event:', error);
@@ -225,8 +140,6 @@ export function UserDashboard({
   const kampungPernahBantu = user?.kampungPernahBantu || [];
   const pendingReport = user?.hasPendingReport || reports.some((r: any) => r.status === 'pending');
   const upcomingEvents = events.filter((event) => event.status === 'published');
-  const draftEvents = events.filter((event) => event.status === 'draft');
-  const completedEvents = events.filter((event) => event.status === 'completed');
 
   return (
     <div className="size-full flex flex-col bg-white">
@@ -245,7 +158,7 @@ export function UserDashboard({
         navItems={[
           { key: 'home', label: 'Home', icon: Home },
           { key: 'events', label: 'Event', icon: Calendar },
-          ...(userMode === 'ksh' ? [] : [{ key: 'report', label: 'Lapor', icon: TrendingUp }]),
+          { key: 'report', label: 'Lapor', icon: TrendingUp },
           { key: 'profile', label: 'Profil', icon: UserIcon }
         ]}
       />
@@ -331,71 +244,50 @@ export function UserDashboard({
               </CardContent>
             </Card>
 
-            {userMode !== 'ksh' && (
-              <>
-                <Card className="border border-yellow-100">
-                  <CardHeader>
-                    <CardTitle className="text-lg flex items-center gap-2 text-yellow-700">
-                      <Users className="w-5 h-5 text-yellow-500" />
-                      Kampung Pernah Dibantu
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    {kampungPernahBantu.length === 0 ? (
-                      <p className="text-sm text-gray-500">Belum ada riwayat kampung yang kamu bantu.</p>
-                    ) : (
-                      kampungPernahBantu.map((item: any, idx: number) => (
-                        <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-yellow-50">
-                          <div>
-                            <div className="font-semibold text-sm">{item.name}</div>
-                            <div className="text-xs text-gray-500">{item.kecamatan}</div>
-                          </div>
-                          <Badge className="bg-yellow-400 text-black">{item.xp} XP</Badge>
-                        </div>
-                      ))
-                    )}
-                  </CardContent>
-                </Card>
-
-                <Card className="border border-green-100">
-                  <CardHeader>
-                    <CardTitle className="text-lg text-green-800">Kampung Kamu Pernah Dibantu</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    {kampungDibantu.length === 0 ? (
-                      <p className="text-sm text-gray-500">Belum ada data kampung yang pernah membantu.</p>
-                    ) : (
-                      kampungDibantu.map((item: any, idx: number) => (
-                        <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-green-50">
-                          <div>
-                            <div className="font-semibold text-sm">{item.name}</div>
-                            <div className="text-xs text-gray-500">{item.kecamatan}</div>
-                          </div>
-                          <Badge className="bg-green-600 text-white">{item.xp} XP</Badge>
-                        </div>
-                      ))
-                    )}
-                  </CardContent>
-                </Card>
-
-                {rekomendasi.length > 0 && (
-                  <Card className="border border-yellow-100">
-                    <CardHeader>
-                      <CardTitle className="text-lg text-yellow-700">Rekomendasi ASN</CardTitle>
-                      <CardDescription>Rekomendasi terbaru untuk kampungmu.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      {rekomendasi.slice(0, 3).map((item: any) => (
-                        <div key={item.id} className="p-3 rounded-xl bg-yellow-50">
-                          <div className="font-semibold text-sm">{item.title}</div>
-                          <div className="text-xs text-gray-600 mt-1">{item.summary || 'Belum ada ringkasan.'}</div>
-                        </div>
-                      ))}
-                    </CardContent>
-                  </Card>
+            <Card className="border border-yellow-100">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2 text-yellow-700">
+                  <Users className="w-5 h-5 text-yellow-500" />
+                  Kampung Pernah Dibantu
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {kampungPernahBantu.length === 0 ? (
+                  <p className="text-sm text-gray-500">Belum ada riwayat kampung yang kamu bantu.</p>
+                ) : (
+                  kampungPernahBantu.map((item: any, idx: number) => (
+                    <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-yellow-50">
+                      <div>
+                        <div className="font-semibold text-sm">{item.name}</div>
+                        <div className="text-xs text-gray-500">{item.kecamatan}</div>
+                      </div>
+                      <Badge className="bg-yellow-400 text-black">{item.xp} XP</Badge>
+                    </div>
+                  ))
                 )}
-              </>
-            )}
+              </CardContent>
+            </Card>
+
+            <Card className="border border-green-100">
+              <CardHeader>
+                <CardTitle className="text-lg text-green-800">Kampung Kamu Pernah Dibantu</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {kampungDibantu.length === 0 ? (
+                  <p className="text-sm text-gray-500">Belum ada data kampung yang pernah membantu.</p>
+                ) : (
+                  kampungDibantu.map((item: any, idx: number) => (
+                    <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-green-50">
+                      <div>
+                        <div className="font-semibold text-sm">{item.name}</div>
+                        <div className="text-xs text-gray-500">{item.kecamatan}</div>
+                      </div>
+                      <Badge className="bg-green-600 text-white">{item.xp} XP</Badge>
+                    </div>
+                  ))
+                )}
+              </CardContent>
+            </Card>
           </div>
         )}
 
@@ -404,17 +296,9 @@ export function UserDashboard({
           <div className="pt-2 space-y-4">
             <div className="flex items-center justify-between gap-4">
               <h2 className="text-2xl font-bold">Daftar Kegiatan</h2>
-              {userMode === 'ksh' && (
-                <Button
-                  className="bg-green-700 text-white hover:bg-green-800"
-                  onClick={() => setIsCreateOpen(true)}
-                >
-                  Buat Kegiatan
-                </Button>
-              )}
             </div>
 
-            {pendingReport && userMode !== 'ksh' && (
+            {pendingReport && (
               <Card className="border-yellow-200 bg-yellow-50">
                 <CardContent className="py-3 text-sm text-yellow-800">
                   Selesaikan laporan kegiatan sebelumnya sebelum mendaftar event baru.
@@ -423,91 +307,42 @@ export function UserDashboard({
             )}
 
             <EventList 
-              events={userMode === 'ksh' ? events : upcomingEvents}
+              events={upcomingEvents}
               authToken={authToken}
               onEventJoined={fetchEvents}
-              canJoin={!pendingReport && userMode !== 'ksh'}
+              canJoin={!pendingReport}
             />
 
             {userMode === 'ksh' && (
-              <div className="space-y-3">
-                <Card className="border-green-100">
-                  <CardHeader>
-                    <CardTitle className="text-lg">Draft Kegiatan</CardTitle>
-                    <CardDescription>Menunggu verifikasi moderator kelurahan.</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {draftEvents.length === 0 ? (
-                      <p className="text-sm text-gray-500">Tidak ada draft.</p>
-                    ) : (
-                      <div className="space-y-2">
-                        {draftEvents.map((event) => (
-                          <div key={event.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                            <div>
-                              <div className="font-semibold text-sm">{event.title}</div>
-                              <div className="text-xs text-gray-500">{event.date}</div>
-                            </div>
-                            <Badge className="bg-yellow-400 text-black">Draft</Badge>
+              <Card className="border-green-100">
+                <CardHeader>
+                  <CardTitle className="text-lg">Kelola Kegiatan Area KSH</CardTitle>
+                  <CardDescription>Tandai selesai untuk event yang sudah terlaksana di area kamu.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {upcomingEvents.length === 0 ? (
+                    <p className="text-sm text-gray-500">Belum ada event terpublish di area kamu.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {upcomingEvents.map((event) => (
+                        <div key={event.id} className="flex items-center justify-between p-3 bg-white rounded-lg border">
+                          <div>
+                            <div className="font-semibold text-sm">{event.title}</div>
+                            <div className="text-xs text-gray-500">{event.kecamatan}{event.kelurahan ? ` / ${event.kelurahan}` : ''}</div>
                           </div>
-                        ))}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-
-                <Card className="border-green-100">
-                  <CardHeader>
-                    <CardTitle className="text-lg">Kegiatan Selesai</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {completedEvents.length === 0 ? (
-                      <p className="text-sm text-gray-500">Belum ada kegiatan selesai.</p>
-                    ) : (
-                      <div className="space-y-2">
-                        {completedEvents.map((event) => (
-                          <div key={event.id} className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                            <div>
-                              <div className="font-semibold text-sm">{event.title}</div>
-                              <div className="text-xs text-gray-500">{event.date}</div>
-                            </div>
-                            <Badge className="bg-green-600 text-white">Selesai</Badge>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-
-                <Card className="border-green-100">
-                  <CardHeader>
-                    <CardTitle className="text-lg">Kegiatan Terpublish</CardTitle>
-                    <CardDescription>Mark kegiatan selesai setelah aktivitas berlangsung.</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {upcomingEvents.length === 0 ? (
-                      <p className="text-sm text-gray-500">Belum ada kegiatan terpublish.</p>
-                    ) : (
-                      <div className="space-y-2">
-                        {upcomingEvents.map((event) => (
-                          <div key={event.id} className="flex items-center justify-between p-3 bg-white rounded-lg border">
-                            <div>
-                              <div className="font-semibold text-sm">{event.title}</div>
-                              <div className="text-xs text-gray-500">{event.date}</div>
-                            </div>
-                            <Button
-                              size="sm"
-                              className="bg-green-700 text-white hover:bg-green-800"
-                              onClick={() => handleCompleteEvent(event.id)}
-                            >
-                              Tandai Selesai
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
+                          <Button
+                            size="sm"
+                            className="bg-green-700 text-white hover:bg-green-800"
+                            onClick={() => handleCompleteEvent(event.id)}
+                          >
+                            Tandai Selesai
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             )}
           </div>
         )}
@@ -519,112 +354,6 @@ export function UserDashboard({
           </div>
         )}
       </div>
-
-      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Buat Kegiatan Baru (KSH)</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-semibold">Judul Kegiatan</label>
-              <Input
-                value={newEvent.title}
-                onChange={(e) => setNewEvent(prev => ({ ...prev, title: e.target.value }))}
-                placeholder="Contoh: Aksi Bersih Kampung"
-              />
-            </div>
-            <div>
-              <label className="text-sm font-semibold">Deskripsi</label>
-              <Textarea
-                value={newEvent.description}
-                onChange={(e) => setNewEvent(prev => ({ ...prev, description: e.target.value }))}
-                placeholder="Ringkasan kegiatan..."
-                rows={3}
-              />
-            </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-sm font-semibold">Pilar</label>
-                  <select
-                    className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
-                    value={newEvent.pillar}
-                    onChange={(e) => setNewEvent(prev => ({ ...prev, pillar: e.target.value }))}
-                  >
-                    <option value="1">Lingkungan</option>
-                    <option value="2">Ekonomi</option>
-                    <option value="3">Kemasyarakatan</option>
-                    <option value="4">Sosial Budaya</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="text-sm font-semibold">Tanggal</label>
-                  <Input
-                    type="date"
-                    value={newEvent.date}
-                    onChange={(e) => setNewEvent(prev => ({ ...prev, date: e.target.value }))}
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-sm font-semibold">Waktu</label>
-                  <Input
-                    type="time"
-                    value={newEvent.time}
-                    onChange={(e) => setNewEvent(prev => ({ ...prev, time: e.target.value }))}
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-semibold">Lokasi</label>
-                  <Input
-                    value={newEvent.location}
-                    onChange={(e) => setNewEvent(prev => ({ ...prev, location: e.target.value }))}
-                    placeholder="Balai RW / Lapangan"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-sm font-semibold">Kuota Relawan</label>
-                  <Input
-                    type="number"
-                    min="0"
-                    value={newEvent.quota}
-                    onChange={(e) => setNewEvent(prev => ({ ...prev, quota: parseInt(e.target.value || '0', 10) }))}
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-semibold">Rekomendasi ASN</label>
-                  <select
-                    className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
-                    value={newEvent.recommendationId}
-                    onChange={(e) => setNewEvent(prev => ({ ...prev, recommendationId: e.target.value }))}
-                  >
-                    <option value="">Tidak ada</option>
-                    {rekomendasi.map((item: any) => (
-                      <option key={item.id} value={item.id}>
-                        {item.title}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
-              Batal
-            </Button>
-            <Button
-              className="bg-green-700 text-white hover:bg-green-800"
-              onClick={handleCreateEvent}
-              disabled={creatingEvent}
-            >
-              {creatingEvent ? 'Membuat...' : 'Simpan'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Reporting Wizard Modal */}
         {activePage === 'report' && (
@@ -639,6 +368,6 @@ export function UserDashboard({
             }}
           />
         )}
-      </div>
+    </div>
   );
 }

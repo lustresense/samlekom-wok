@@ -2,3 +2,8 @@
 .env.*
 node_modules/
 dist/
+database/*
+!database/backups/
+!database/backups/*.sql
+!database/backups/*.db
+server/__pycache__/

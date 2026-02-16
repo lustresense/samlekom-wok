@@ -5,7 +5,7 @@ import { Input } from '@/app/components/ui/input';
 import { Label } from '@/app/components/ui/label';
 import { Checkbox } from '@/app/components/ui/checkbox';
 import { X, Camera, Loader2, CheckCircle } from 'lucide-react';
-import { projectId, publicAnonKey } from '/utils/supabase/info';
+import { apiBaseUrl, publicAnonKey } from '/utils/supabase/info';
 import { toast } from 'sonner';
 
 interface ReportingWizardProps {
@@ -90,7 +90,7 @@ export function ReportingWizard({ authToken, userId, events, onClose }: Reportin
       };
 
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-32aa5c5c/reports`,
+        `${apiBaseUrl}/reports`,
         {
           method: 'POST',
           headers: {

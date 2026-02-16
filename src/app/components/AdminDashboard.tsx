@@ -19,7 +19,7 @@ import {
   Clock,
   Crown
 } from 'lucide-react';
-import { projectId, publicAnonKey } from '/utils/supabase/info';
+import { apiBaseUrl, publicAnonKey } from '/utils/supabase/info';
 import { toast } from 'sonner';
 import { POVSwitcher } from '@/app/components/POVSwitcher';
 import { AdminGodMode } from '@/app/components/AdminGodMode';
@@ -68,7 +68,7 @@ export function AdminDashboard({ user, authToken, onLogout, onNavigate, currentV
   const fetchUsers = async () => {
     try {
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-32aa5c5c/users`,
+        `${apiBaseUrl}/users`,
         {
           headers: {
             'Authorization': `Bearer ${authToken || publicAnonKey}`
@@ -88,7 +88,7 @@ export function AdminDashboard({ user, authToken, onLogout, onNavigate, currentV
   const fetchEvents = async () => {
     try {
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-32aa5c5c/events`,
+        `${apiBaseUrl}/events`,
         {
           headers: {
             'Authorization': `Bearer ${authToken || publicAnonKey}`
@@ -108,7 +108,7 @@ export function AdminDashboard({ user, authToken, onLogout, onNavigate, currentV
   const fetchReports = async () => {
     try {
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-32aa5c5c/reports`,
+        `${apiBaseUrl}/reports`,
         {
           headers: {
             'Authorization': `Bearer ${authToken || publicAnonKey}`
@@ -128,7 +128,7 @@ export function AdminDashboard({ user, authToken, onLogout, onNavigate, currentV
   const handleVerifyReport = async (reportId: string, approved: boolean) => {
     try {
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-32aa5c5c/reports/${reportId}/verify`,
+        `${apiBaseUrl}/reports/${reportId}/verify`,
         {
           method: 'POST',
           headers: {

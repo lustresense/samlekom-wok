@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app
 import { Badge } from '@/app/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/app/components/ui/tabs';
 import { Calendar, MapPin, Users, Star, Loader2 } from 'lucide-react';
-import { projectId, publicAnonKey } from '/utils/supabase/info';
+import { apiBaseUrl, publicAnonKey } from '/utils/supabase/info';
 import { toast } from 'sonner';
 
 interface EventListProps {
@@ -40,7 +40,7 @@ export function EventList({ events, authToken, onEventJoined, canJoin = true }: 
     
     try {
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-32aa5c5c/events/${eventId}/join`,
+        `${apiBaseUrl}/events/${eventId}/join`,
         {
           method: 'POST',
           headers: {

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { Button } from '@/app/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/components/ui/card';
 import { Input } from '@/app/components/ui/input';
@@ -6,7 +6,7 @@ import { Label } from '@/app/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/select';
 import { Alert, AlertDescription } from '@/app/components/ui/alert';
 import { ArrowLeft, AlertCircle, Loader2, CheckCircle } from 'lucide-react';
-import { projectId, publicAnonKey } from '/utils/supabase/info';
+import { apiBaseUrl, publicAnonKey } from '/utils/supabase/info';
 
 interface RegisterPageProps {
   onNavigate: (page: 'landing' | 'login') => void;
@@ -28,9 +28,41 @@ export function RegisterPage({ onNavigate, onRegister }: RegisterPageProps) {
 
   const [kodeposValid, setKodeposValid] = useState<boolean | null>(null);
   const [kelurahanOptions, setKelurahanOptions] = useState<Array<{ kelurahan: string; kecamatan: string }>>([]);
+  const [kodeposHints, setKodeposHints] = useState<string[]>([]);
+  const [kelurahanSearch, setKelurahanSearch] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  useEffect(() => {
+    const loadKodeposHints = async () => {
+      try {
+        const res = await fetch(`${apiBaseUrl}/geo/options`, {
+          headers: {
+            'Authorization': `Bearer ${publicAnonKey}`
+          }
+        });
+        if (!res.ok) {
+          return;
+        }
+        const data = await res.json();
+        const kodeposSet = new Set<string>();
+        for (const kecamatan of data?.kecamatan || []) {
+          for (const kelurahan of kecamatan?.kelurahan || []) {
+            for (const code of kelurahan?.kodepos || []) {
+              if (typeof code === 'string') {
+                kodeposSet.add(code);
+              }
+            }
+          }
+        }
+        setKodeposHints(Array.from(kodeposSet).sort());
+      } catch {
+        // Ignore hint loading error
+      }
+    };
+    loadKodeposHints();
+  }, []);
 
   // Auto-fill kecamatan dan kelurahan based on kodepos
   useEffect(() => {
@@ -48,7 +80,7 @@ export function RegisterPage({ onNavigate, onRegister }: RegisterPageProps) {
 
       try {
         const res = await fetch(
-          `https://${projectId}.supabase.co/functions/v1/make-server-32aa5c5c/kodepos/${formData.kodepos}`,
+          `${apiBaseUrl}/kodepos/${formData.kodepos}`,
           {
             headers: {
               'Authorization': `Bearer ${publicAnonKey}`
@@ -67,6 +99,7 @@ export function RegisterPage({ onNavigate, onRegister }: RegisterPageProps) {
           kecamatan: k.kecamatan
         }));
         setKelurahanOptions(list);
+        setKelurahanSearch('');
         if (list.length === 1) {
           setFormData(prev => ({
             ...prev,
@@ -141,7 +174,7 @@ export function RegisterPage({ onNavigate, onRegister }: RegisterPageProps) {
 
     try {
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-32aa5c5c/auth/signup`,
+        `${apiBaseUrl}/auth/signup`,
         {
           method: 'POST',
           headers: {
@@ -170,27 +203,9 @@ export function RegisterPage({ onNavigate, onRegister }: RegisterPageProps) {
       if (data.success) {
         setSuccess('Pendaftaran berhasil! Mengalihkan...');
         
-        // Auto-login after successful registration
+        // Auto-login after successful registration using real session token.
         setTimeout(() => {
-          // Create user object for login
-          const user = {
-            id: data.user.id,
-            email: data.user.email,
-            name: formData.name,
-            role: 'user' as const,
-            level: 1,
-            levelName: 'Pendatang Baru',
-            points: 0,
-            kecamatan: formData.kecamatan,
-            kelurahan: formData.kelurahan,
-            kodepos: formData.kodepos,
-            rw: formData.rw
-          };
-          
-          // Generate temporary token
-          const token = `user-${data.user.id}`;
-          
-          onRegister(user, token);
+          onRegister(data.user, data.token);
         }, 1500);
       }
     } catch (err: any) {
@@ -200,6 +215,17 @@ export function RegisterPage({ onNavigate, onRegister }: RegisterPageProps) {
       setLoading(false);
     }
   };
+
+  const filteredKelurahanOptions = kelurahanOptions.filter((item) => {
+    const q = kelurahanSearch.trim().toLowerCase();
+    if (!q) {
+      return true;
+    }
+    return (
+      item.kelurahan.toLowerCase().includes(q) ||
+      item.kecamatan.toLowerCase().includes(q)
+    );
+  });
 
   return (
     <div className="min-h-screen bg-white text-gray-900 font-sans selection:bg-[#FFC107] selection:text-black flex flex-col">
@@ -344,6 +370,7 @@ export function RegisterPage({ onNavigate, onRegister }: RegisterPageProps) {
                         id="kodepos"
                         placeholder="60xxx"
                         maxLength={5}
+                        list="kodepos-surabaya-list"
                         value={formData.kodepos}
                         onChange={(e) => handleChange('kodepos', e.target.value.replace(/\D/g, ''))}
                         required
@@ -364,6 +391,11 @@ export function RegisterPage({ onNavigate, onRegister }: RegisterPageProps) {
                     {kodeposValid === false && (
                       <p className="text-xs text-red-500 font-medium">Kode pos tidak valid untuk Surabaya</p>
                     )}
+                    <datalist id="kodepos-surabaya-list">
+                      {kodeposHints.map((code) => (
+                        <option key={code} value={code} />
+                      ))}
+                    </datalist>
                   </div>
 
                   <div className="space-y-2">
@@ -399,28 +431,37 @@ export function RegisterPage({ onNavigate, onRegister }: RegisterPageProps) {
                       Kelurahan
                     </Label>
                     {kelurahanOptions.length > 1 ? (
-                      <Select
-                        value={formData.kelurahan}
-                        onValueChange={(value) => {
-                          const selected = kelurahanOptions.find((k) => k.kelurahan === value);
-                          setFormData((prev) => ({
-                            ...prev,
-                            kelurahan: value,
-                            kecamatan: selected?.kecamatan || ''
-                          }));
-                        }}
-                      >
-                        <SelectTrigger className="bg-white border-gray-300 rounded-xl">
-                          <SelectValue placeholder="Pilih kelurahan" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {kelurahanOptions.map((k) => (
-                            <SelectItem key={`${k.kelurahan}-${k.kecamatan}`} value={k.kelurahan}>
-                              {k.kelurahan} • {k.kecamatan}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <div className="space-y-2">
+                        <Input
+                          placeholder="Cari kelurahan..."
+                          value={kelurahanSearch}
+                          onChange={(e) => setKelurahanSearch(e.target.value)}
+                          disabled={loading}
+                          className="border-gray-300 focus:border-black focus:ring-black rounded-xl"
+                        />
+                        <Select
+                          value={formData.kelurahan}
+                          onValueChange={(value) => {
+                            const selected = kelurahanOptions.find((k) => k.kelurahan === value);
+                            setFormData((prev) => ({
+                              ...prev,
+                              kelurahan: value,
+                              kecamatan: selected?.kecamatan || ''
+                            }));
+                          }}
+                        >
+                          <SelectTrigger className="bg-white border-gray-300 rounded-xl">
+                            <SelectValue placeholder="Pilih kelurahan" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {filteredKelurahanOptions.map((k) => (
+                              <SelectItem key={`${k.kelurahan}-${k.kecamatan}`} value={k.kelurahan}>
+                                {k.kelurahan} - {k.kecamatan}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
                     ) : (
                       <Input
                         id="kelurahan"
@@ -466,3 +507,4 @@ export function RegisterPage({ onNavigate, onRegister }: RegisterPageProps) {
     </div>
   );
 }
+
