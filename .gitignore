@@ -7,3 +7,4 @@ database/*
 !database/backups/*.sql
 !database/backups/*.db
 server/__pycache__/
+docs/logbook/logbook.md

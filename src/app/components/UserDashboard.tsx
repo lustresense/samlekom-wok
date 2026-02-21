@@ -29,7 +29,8 @@ export function UserDashboard({
   moderatorTier,
   onModeratorTierChange
 }: UserDashboardProps) {
-  const [activePage, setActivePage] = useState<'home' | 'events' | 'report' | 'profile'>('home');
+  const [activePage, setActivePage] = useState<'home' | 'events' | 'leaderboards' | 'profile'>('home');
+  const [isReportWizardOpen, setIsReportWizardOpen] = useState(false);
   const [events, setEvents] = useState<any[]>([]);
   const [userMode, setUserMode] = useState<'relawan' | 'ksh'>(user?.isKsh ? 'ksh' : 'relawan');
   const [reports, setReports] = useState<any[]>([]);
@@ -43,10 +44,8 @@ export function UserDashboard({
 
   const fetchEvents = async () => {
     try {
-      const status = 'published';
-      const query = status ? `?status=${status}` : '';
       const response = await fetch(
-        `${apiBaseUrl}/events${query}`,
+        `${apiBaseUrl}/events`,
         {
           headers: {
             'Authorization': `Bearer ${authToken || publicAnonKey}`
@@ -140,6 +139,19 @@ export function UserDashboard({
   const kampungPernahBantu = user?.kampungPernahBantu || [];
   const pendingReport = user?.hasPendingReport || reports.some((r: any) => r.status === 'pending');
   const upcomingEvents = events.filter((event) => event.status === 'published');
+  const reportableEvents = events.filter(
+    (event) => event.status === 'completed' && Array.isArray(event.participants) && event.participants.includes(user?.id)
+  );
+  const topKampung = kampungLeaderboard.slice(0, 5);
+
+  const openReportingWizard = () => {
+    if (reportableEvents.length === 0) {
+      toast.info('Laporan aktif setelah kamu mengikuti event yang sudah selesai.');
+      setActivePage('events');
+      return;
+    }
+    setIsReportWizardOpen(true);
+  };
 
   return (
     <div className="size-full flex flex-col bg-white">
@@ -158,7 +170,7 @@ export function UserDashboard({
         navItems={[
           { key: 'home', label: 'Home', icon: Home },
           { key: 'events', label: 'Event', icon: Calendar },
-          { key: 'report', label: 'Lapor', icon: TrendingUp },
+          { key: 'leaderboards', label: 'Leaderboards', icon: Crown },
           { key: 'profile', label: 'Profil', icon: UserIcon }
         ]}
       />
@@ -204,23 +216,74 @@ export function UserDashboard({
                 <span className="font-semibold">Cari Event</span>
               </Button>
               <Button
-                onClick={() => setActivePage('report')}
+                onClick={openReportingWizard}
+                disabled={reportableEvents.length === 0}
                 className="h-auto aspect-[4/3] flex flex-col items-center justify-center gap-3 bg-white border border-yellow-100 shadow-sm hover:shadow-md hover:bg-yellow-50 text-black rounded-2xl"
               >
                 <div className="w-12 h-12 bg-yellow-50 text-yellow-600 rounded-full flex items-center justify-center">
                   <TrendingUp className="w-6 h-6" />
                 </div>
                 <span className="font-semibold">Lapor Kegiatan</span>
+                {reportableEvents.length === 0 && (
+                  <span className="text-[11px] text-gray-500 font-normal">Aktif setelah event selesai</span>
+                )}
               </Button>
             </div>
 
             <Card className="border border-green-100">
               <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2 text-green-800">
-                  <Crown className="w-5 h-5 text-yellow-500" />
-                  Leaderboard Kampung
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <CardTitle className="text-lg flex items-center gap-2 text-green-800">
+                      <Crown className="w-5 h-5 text-yellow-500" />
+                      Leaderboard Kampung
+                    </CardTitle>
+                    <CardDescription>Peringkat berbasis performa kampung (Top 5)</CardDescription>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-green-200 text-green-700 hover:bg-green-50"
+                    onClick={() => setActivePage('leaderboards')}
+                  >
+                    See All
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {kampungLeaderboard.length === 0 ? (
+                  <p className="text-sm text-gray-500">Belum ada data leaderboard.</p>
+                ) : (
+                  topKampung.map((item: any, idx: number) => (
+                    <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-green-50">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-white border border-green-200 flex items-center justify-center font-bold text-green-700">
+                          {idx + 1}
+                        </div>
+                        <div>
+                          <div className="font-semibold text-sm">{item.name}</div>
+                          <div className="text-xs text-gray-500">{item.kecamatan}</div>
+                        </div>
+                      </div>
+                      <div className="text-sm font-bold text-green-700">{item.xp} XP</div>
+                    </div>
+                  ))
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Leaderboards Tab */}
+        {activePage === 'leaderboards' && (
+          <div className="space-y-4 pt-2">
+            <Card className="border border-green-100">
+              <CardHeader>
+                <CardTitle className="text-xl flex items-center gap-2 text-green-800">
+                  <Crown className="w-6 h-6 text-yellow-500" />
+                  Leaderboards Kampung
                 </CardTitle>
-                <CardDescription>Peringkat berbasis performa kampung</CardDescription>
+                <CardDescription>Peringkat lengkap performa kampung se-kota.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
                 {kampungLeaderboard.length === 0 ? (
@@ -296,6 +359,13 @@ export function UserDashboard({
           <div className="pt-2 space-y-4">
             <div className="flex items-center justify-between gap-4">
               <h2 className="text-2xl font-bold">Daftar Kegiatan</h2>
+              <Button
+                onClick={openReportingWizard}
+                disabled={reportableEvents.length === 0}
+                className="bg-[#FFC107] text-black hover:bg-[#FFD54F] font-semibold"
+              >
+                Lapor Kegiatan
+              </Button>
             </div>
 
             {pendingReport && (
@@ -307,7 +377,7 @@ export function UserDashboard({
             )}
 
             <EventList 
-              events={upcomingEvents}
+              events={events}
               authToken={authToken}
               onEventJoined={fetchEvents}
               canJoin={!pendingReport}
@@ -356,13 +426,13 @@ export function UserDashboard({
       </div>
 
       {/* Reporting Wizard Modal */}
-        {activePage === 'report' && (
+        {isReportWizardOpen && (
           <ReportingWizard
             authToken={authToken}
             userId={user?.id}
-            events={events.filter((event) => event.status === 'completed')}
+            events={reportableEvents}
             onClose={() => {
-              setActivePage('home');
+              setIsReportWizardOpen(false);
               fetchEvents();
               fetchReports();
             }}

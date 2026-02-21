@@ -572,6 +572,8 @@ def insert_user(conn, name, email, password, role_code, *, is_ksh=0, tier=None, 
 def seed_demo(conn):
   insert_user(conn, "Administrator", "admin@simrp.local", "admin", "admin", kelurahan_name="Keputih")
   insert_user(conn, "Andi Relawan", "relawan.demo@simrp.app", "password123", "user", kelurahan_name="Bulak")
+  insert_user(conn, "Nia Relawan", "relawan2.demo@simrp.app", "password123", "user", kelurahan_name="Keputih")
+  insert_user(conn, "Budi Relawan", "relawan3.demo@simrp.app", "password123", "user", kelurahan_name="Wonorejo")
   insert_user(conn, "Kak Esa", "ksh.demo@simrp.app", "password123", "ksh", is_ksh=1, kelurahan_name="Keputih")
   insert_user(conn, "Pak Raka ASN", "moderator1.demo@simrp.app", "password123", "moderator_t1", tier=1, kelurahan_name="Keputih")
   insert_user(conn, "Bu Sinta Lurah", "moderator2.demo@simrp.app", "password123", "moderator_t2", tier=2, tier2_badge="lurah", kelurahan_name="Keputih")

@@ -4,6 +4,8 @@ Struktur dokumentasi proyek:
 
 - `architecture/GRAND_DESIGN_FINAL.md`
 - `architecture/SITEMAP_IA_SIMRP.md`
+- `ASSET_INVENTORY.md`
+- `LIBRARY_SELECTION.md`
 - `guides/README_SIMRP.md`
 - `guides/QUICKSTART.md`
 - `guides/PETUNJUK_PENGGUNAAN.md`
