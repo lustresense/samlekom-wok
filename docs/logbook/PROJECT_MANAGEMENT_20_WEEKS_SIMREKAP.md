@@ -11,6 +11,11 @@ Catatan:
 - `UI Design` dan `Frontend` dikerjakan oleh orang yang sama (temanmu).
 - Frontend tidak boleh UI-only. Harus ada integrasi API, state handling, error handling, dan testing FE.
 
+## Referensi Milestone Detail W06-W20 (M1-M15)
+- Sumber milestone rinci per PIC dan per hari: `docs/logbook/MILESTONE_TABLE_W06_W20_NO_SKIP.csv`
+- Turunan logbook rinci harian dua orang: `docs/logbook/LOGBOOK_HARIAN_W06_W20_DUAL_ROLE.md`
+- Aturan sinkronisasi: kode `D26-D100` di CSV harus sama dengan Day ID di logbook harian.
+
 ## Sinkronisasi Progress Aktual W01-W05 (Berdasarkan Logbook + Lampiran)
 | Week | Rentang | Progress Kamu (UX+BE) | Progress Teman (UI+FE) |
 |---|---|---|---|

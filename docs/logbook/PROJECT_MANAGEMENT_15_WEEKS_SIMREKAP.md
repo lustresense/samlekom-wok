@@ -12,6 +12,11 @@ Catatan:
 - Orangnya tetap satu untuk UI dan FE.
 - FE tetap wajib pegang integrasi API, bukan hanya desain.
 
+## Referensi Milestone Detail W06-W20 (M1-M15)
+- Sumber milestone rinci per PIC dan per hari: `docs/logbook/MILESTONE_TABLE_W06_W20_NO_SKIP.csv`
+- Turunan logbook rinci harian dua orang: `docs/logbook/LOGBOOK_HARIAN_W06_W20_DUAL_ROLE.md`
+- Aturan sinkronisasi: kode `D26-D100` di CSV harus sama dengan Day ID di logbook harian.
+
 ## Fase + Milestone (15 Pekan)
 ## Fase A - Pra-Produksi Singkat (W06)
 - M-A1: Scope MVP final.

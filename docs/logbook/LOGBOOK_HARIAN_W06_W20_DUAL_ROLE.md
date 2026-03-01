@@ -39,12 +39,14 @@ Referensi sinkron wajib:
 ## PEKAN 6 (W06): Pra-Produksi Final
 
 Status Pekan: Proyeksi
-Milestone Aktif: M1 PREPARATION
-Task Utama: Setup dan Freeze Scope
+Milestone Aktif: M1: PREPARATION (W06)
+Task Utama: Farchan - API Contract & Scope Definition | Ikram - UI Audit & Component Mapping
 
 ### Day 26 (Senin, 2 Mar 2026): Freeze scope MVP dan audit screen map
 Status: [RENCANA]
-Milestone/Task: M1 PREPARATION / Setup dan Freeze Scope
+Milestone/Group: M1: PREPARATION (W06)
+Task Referensi Farchan: API Contract & Scope Definition
+Task Referensi Ikram: UI Audit & Component Mapping
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Freeze scope MVP dan rapikan backlog prioritas.
@@ -61,7 +63,7 @@ Lampiran Farchan (Bukti Screenshot):
 #### Entri Ikram (UI+Frontend)
 Aktivitas: Audit ulang screen Figma aktif dan mapping ke modul FE.
 Uraian Kegiatan (Logbook):
-"Aktivitas hari ini saya adalah Audit ulang screen Figma aktif dan mapping ke modul FE. Saya validasi tampilan, transisi state, dan respons error/loading supaya behavior FE tidak beda dengan aturan backend di milestone M1 PREPARATION / Setup dan Freeze Scope. Setelah sinkronisasi final, 'Scope MVP final + screen map' saya pastikan sudah jelas dan bisa ditracking hasilnya."
+"Aktivitas hari ini saya adalah Audit ulang screen Figma aktif dan mapping ke modul FE. Saya validasi tampilan, transisi state, dan respons error/loading supaya behavior FE tidak beda dengan aturan backend di milestone M1: PREPARATION (W06). Setelah sinkronisasi final, 'Scope MVP final + screen map' saya pastikan sudah jelas dan bisa ditracking hasilnya."
 Output Ikram:
 - Artefak UI+Frontend harian selesai: Audit ulang screen Figma aktif dan mapping ke modul FE.
 - Outcome harian terukur: Scope MVP final + screen map.
@@ -72,7 +74,9 @@ Lampiran Ikram (Bukti Screenshot):
 
 ### Day 27 (Selasa, 3 Mar 2026): API contract v1 dan baseline FE
 Status: [RENCANA]
-Milestone/Task: M1 PREPARATION / Setup dan Freeze Scope
+Milestone/Group: M1: PREPARATION (W06)
+Task Referensi Farchan: API Contract & Scope Definition
+Task Referensi Ikram: UI Audit & Component Mapping
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Finalkan API contract v1 untuk auth/event/report.
@@ -100,7 +104,9 @@ Lampiran Ikram (Bukti Screenshot):
 
 ### Day 28 (Rabu, 4 Mar 2026): Validasi design thinking artifact
 Status: [RENCANA]
-Milestone/Task: M1 PREPARATION / Setup dan Freeze Scope
+Milestone/Group: M1: PREPARATION (W06)
+Task Referensi Farchan: ERD & Sprint Planning W07
+Task Referensi Ikram: UI Audit & Component Mapping
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Finalisasi persona, journey map, dan problem framing.
@@ -117,7 +123,7 @@ Lampiran Farchan (Bukti Screenshot):
 #### Entri Ikram (UI+Frontend)
 Aktivitas: Sinkronkan wireframe akhir ke struktur komponen FE.
 Uraian Kegiatan (Logbook):
-"Aktivitas hari ini saya adalah Sinkronkan wireframe akhir ke struktur komponen FE. Saya validasi tampilan, transisi state, dan respons error/loading supaya behavior FE tidak beda dengan aturan backend di milestone M1 PREPARATION / Setup dan Freeze Scope. Setelah sinkronisasi final, 'Dokumen persona/journey + component map' saya pastikan sudah jelas dan bisa ditracking hasilnya."
+"Aktivitas hari ini saya adalah Sinkronkan wireframe akhir ke struktur komponen FE. Saya validasi tampilan, transisi state, dan respons error/loading supaya behavior FE tidak beda dengan aturan backend di milestone M1: PREPARATION (W06). Setelah sinkronisasi final, 'Dokumen persona/journey + component map' saya pastikan sudah jelas dan bisa ditracking hasilnya."
 Output Ikram:
 - Artefak UI+Frontend harian selesai: Sinkronkan wireframe akhir ke struktur komponen FE.
 - Outcome harian terukur: Dokumen persona/journey + component map.
@@ -128,7 +134,9 @@ Lampiran Ikram (Bukti Screenshot):
 
 ### Day 29 (Kamis, 5 Mar 2026): Acceptance criteria sprint 1
 Status: [RENCANA]
-Milestone/Task: M1 PREPARATION / Setup dan Freeze Scope
+Milestone/Group: M1: PREPARATION (W06)
+Task Referensi Farchan: ERD & Sprint Planning W07
+Task Referensi Ikram: Setup Repo & App Shell
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Tetapkan acceptance criteria dan DoD untuk fitur sprint 1.
@@ -156,7 +164,9 @@ Lampiran Ikram (Bukti Screenshot):
 
 ### Day 30 (Jumat, 6 Mar 2026): Sprint planning W07
 Status: [RENCANA]
-Milestone/Task: M1 PREPARATION / Setup dan Freeze Scope
+Milestone/Group: M1: PREPARATION (W06)
+Task Referensi Farchan: ERD & Sprint Planning W07
+Task Referensi Ikram: Setup Repo & App Shell
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Kunci sprint planning W07 dan risk register.
@@ -185,12 +195,14 @@ Lampiran Ikram (Bukti Screenshot):
 ## PEKAN 7 (W07): Auth dan Role Guard
 
 Status Pekan: Proyeksi
-Milestone Aktif: M2 AUTH SYSTEM
-Task Utama: Authentication dan Role
+Milestone Aktif: M2: AUTH SYSTEM (W07)
+Task Utama: Farchan - API Login, Register & Session | Ikram - Slicing UI & Integrasi Login
 
 ### Day 31 (Senin, 9 Mar 2026): Validasi login register
 Status: [RENCANA]
-Milestone/Task: M2 AUTH SYSTEM / Authentication dan Role
+Milestone/Group: M2: AUTH SYSTEM (W07)
+Task Referensi Farchan: API Login, Register & Session
+Task Referensi Ikram: Slicing UI & Integrasi Login
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Implement validasi signup/login backend.
@@ -218,7 +230,9 @@ Lampiran Ikram (Bukti Screenshot):
 
 ### Day 32 (Selasa, 10 Mar 2026): Session dan route guard
 Status: [RENCANA]
-Milestone/Task: M2 AUTH SYSTEM / Authentication dan Role
+Milestone/Group: M2: AUTH SYSTEM (W07)
+Task Referensi Farchan: API Login, Register & Session
+Task Referensi Ikram: Slicing UI & Integrasi Login
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Implement session, auth me, dan logout backend.
@@ -246,7 +260,9 @@ Lampiran Ikram (Bukti Screenshot):
 
 ### Day 33 (Rabu, 11 Mar 2026): Permission per role
 Status: [RENCANA]
-Milestone/Task: M2 AUTH SYSTEM / Authentication dan Role
+Milestone/Group: M2: AUTH SYSTEM (W07)
+Task Referensi Farchan: RBAC & Error Handling Auth
+Task Referensi Ikram: Role Routing & Handling FE
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Implement mapping permission per role.
@@ -263,7 +279,7 @@ Lampiran Farchan (Bukti Screenshot):
 #### Entri Ikram (UI+Frontend)
 Aktivitas: Sesuaikan menu UI per role dan conditional rendering FE.
 Uraian Kegiatan (Logbook):
-"Hari ini saya ngerjain Sesuaikan menu UI per role dan conditional rendering FE dalam konteks 'Permission per role'. Pengerjaan saya alirin dari setup komponen, sinkronisasi state, sampai cek akhir integrasi agar tetap sejalan dengan milestone M2 AUTH SYSTEM / Authentication dan Role. Hasil 'Role-based view aktif' saya pastikan bisa langsung dipakai tim tanpa nunggu penjelasan tambahan."
+"Hari ini saya ngerjain Sesuaikan menu UI per role dan conditional rendering FE dalam konteks 'Permission per role'. Pengerjaan saya alirin dari setup komponen, sinkronisasi state, sampai cek akhir integrasi agar tetap sejalan dengan milestone M2: AUTH SYSTEM (W07). Hasil 'Role-based view aktif' saya pastikan bisa langsung dipakai tim tanpa nunggu penjelasan tambahan."
 Output Ikram:
 - Artefak UI+Frontend harian selesai: Sesuaikan menu UI per role dan conditional rendering FE.
 - Outcome harian terukur: Role-based view aktif.
@@ -274,7 +290,9 @@ Lampiran Ikram (Bukti Screenshot):
 
 ### Day 34 (Kamis, 12 Mar 2026): Standarisasi error auth
 Status: [RENCANA]
-Milestone/Task: M2 AUTH SYSTEM / Authentication dan Role
+Milestone/Group: M2: AUTH SYSTEM (W07)
+Task Referensi Farchan: RBAC & Error Handling Auth
+Task Referensi Ikram: Role Routing & Handling FE
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Stabilkan model error auth 400/401/429.
@@ -302,7 +320,9 @@ Lampiran Ikram (Bukti Screenshot):
 
 ### Day 35 (Jumat, 13 Mar 2026): Retest auth E2E
 Status: [RENCANA]
-Milestone/Task: M2 AUTH SYSTEM / Authentication dan Role
+Milestone/Group: M2: AUTH SYSTEM (W07)
+Task Referensi Farchan: RBAC & Error Handling Auth
+Task Referensi Ikram: Role Routing & Handling FE
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Retest auth end-to-end lintas role.
@@ -319,7 +339,7 @@ Lampiran Farchan (Bukti Screenshot):
 #### Entri Ikram (UI+Frontend)
 Aktivitas: Polish UI/FE auth dan catat defect.
 Uraian Kegiatan (Logbook):
-"Hari ini saya ngerjain Polish UI/FE auth dan catat defect dalam konteks 'Retest auth E2E'. Pengerjaan saya alirin dari setup komponen, sinkronisasi state, sampai cek akhir integrasi agar tetap sejalan dengan milestone M2 AUTH SYSTEM / Authentication dan Role. Hasil 'Auth lintas role stabil' saya pastikan bisa langsung dipakai tim tanpa nunggu penjelasan tambahan."
+"Hari ini saya ngerjain Polish UI/FE auth dan catat defect dalam konteks 'Retest auth E2E'. Pengerjaan saya alirin dari setup komponen, sinkronisasi state, sampai cek akhir integrasi agar tetap sejalan dengan milestone M2: AUTH SYSTEM (W07). Hasil 'Auth lintas role stabil' saya pastikan bisa langsung dipakai tim tanpa nunggu penjelasan tambahan."
 Output Ikram:
 - Artefak UI+Frontend harian selesai: Polish UI/FE auth dan catat defect.
 - Outcome harian terukur: Auth lintas role stabil.
@@ -331,17 +351,19 @@ Lampiran Ikram (Bukti Screenshot):
 ## PEKAN 8 (W08): Event Draft Approval Publish
 
 Status Pekan: Proyeksi
-Milestone Aktif: M3 EVENT MODULE
-Task Utama: Event Management
+Milestone Aktif: M3: EVENT MODULE (W08)
+Task Utama: Farchan - API Create & Edit Draft Event | Ikram - UI Form Event & List Draft
 
 ### Day 36 (Senin, 16 Mar 2026): Rule create event
 Status: [RENCANA]
-Milestone/Task: M3 EVENT MODULE / Event Management
+Milestone/Group: M3: EVENT MODULE (W08)
+Task Referensi Farchan: API Create & Edit Draft Event
+Task Referensi Ikram: UI Form Event & List Draft
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Validasi rule create event untuk scope pilar kuota.
 Uraian Kegiatan (Logbook):
-"Aktivitas utama saya hari ini adalah Validasi rule create event untuk scope pilar kuota. Saya jalankan validasi dari skenario normal sampai edge case, terus saya cocokkan hasil aktual dengan acceptance criteria di milestone M3 EVENT MODULE / Event Management. Setelah itu saya catat poin koreksi dan konfirmasi final biar 'Create event draft aktif' punya dasar teknis yang jelas."
+"Aktivitas utama saya hari ini adalah Validasi rule create event untuk scope pilar kuota. Saya jalankan validasi dari skenario normal sampai edge case, terus saya cocokkan hasil aktual dengan acceptance criteria di milestone M3: EVENT MODULE (W08). Setelah itu saya catat poin koreksi dan konfirmasi final biar 'Create event draft aktif' punya dasar teknis yang jelas."
 Output Farchan:
 - Artefak UX+Backend harian selesai: Validasi rule create event untuk scope pilar kuota.
 - Outcome harian terukur: Create event draft aktif.
@@ -364,7 +386,9 @@ Lampiran Ikram (Bukti Screenshot):
 
 ### Day 37 (Selasa, 17 Mar 2026): Draft event list
 Status: [RENCANA]
-Milestone/Task: M3 EVENT MODULE / Event Management
+Milestone/Group: M3: EVENT MODULE (W08)
+Task Referensi Farchan: API Create & Edit Draft Event
+Task Referensi Ikram: UI Form Event & List Draft
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Stabilkan endpoint create draft event.
@@ -392,7 +416,9 @@ Lampiran Ikram (Bukti Screenshot):
 
 ### Day 38 (Rabu, 18 Mar 2026): Approval reject flow
 Status: [RENCANA]
-Milestone/Task: M3 EVENT MODULE / Event Management
+Milestone/Group: M3: EVENT MODULE (W08)
+Task Referensi Farchan: Logic Approval & Publish API
+Task Referensi Ikram: UI Approval Flow & Status
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Implement endpoint approval/reject event.
@@ -420,12 +446,14 @@ Lampiran Ikram (Bukti Screenshot):
 
 ### Day 39 (Kamis, 19 Mar 2026): Publish status event
 Status: [RENCANA]
-Milestone/Task: M3 EVENT MODULE / Event Management
+Milestone/Group: M3: EVENT MODULE (W08)
+Task Referensi Farchan: Logic Approval & Publish API
+Task Referensi Ikram: UI Approval Flow & Status
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Pastikan publish event sesuai status backend.
 Uraian Kegiatan (Logbook):
-"Hari ini saya mengerjakan Pastikan publish event sesuai status backend pada konteks 'Publish status event'. Pekerjaan saya jalankan bertahap dari perapihan kebutuhan, eksekusi inti, sampai pengecekan hasil agar sesuai milestone M3 EVENT MODULE / Event Management. Setelah selesai, saya pastikan 'Event publish tampil benar' sudah siap dipakai tanpa nunggu klarifikasi tambahan."
+"Hari ini saya mengerjakan Pastikan publish event sesuai status backend pada konteks 'Publish status event'. Pekerjaan saya jalankan bertahap dari perapihan kebutuhan, eksekusi inti, sampai pengecekan hasil agar sesuai milestone M3: EVENT MODULE (W08). Setelah selesai, saya pastikan 'Event publish tampil benar' sudah siap dipakai tanpa nunggu klarifikasi tambahan."
 Output Farchan:
 - Artefak UX+Backend harian selesai: Pastikan publish event sesuai status backend.
 - Outcome harian terukur: Event publish tampil benar.
@@ -437,7 +465,7 @@ Lampiran Farchan (Bukti Screenshot):
 #### Entri Ikram (UI+Frontend)
 Aktivitas: Update kartu event dan badge status FE.
 Uraian Kegiatan (Logbook):
-"Hari ini saya ngerjain Update kartu event dan badge status FE dalam konteks 'Publish status event'. Pengerjaan saya alirin dari setup komponen, sinkronisasi state, sampai cek akhir integrasi agar tetap sejalan dengan milestone M3 EVENT MODULE / Event Management. Hasil 'Event publish tampil benar' saya pastikan bisa langsung dipakai tim tanpa nunggu penjelasan tambahan."
+"Hari ini saya ngerjain Update kartu event dan badge status FE dalam konteks 'Publish status event'. Pengerjaan saya alirin dari setup komponen, sinkronisasi state, sampai cek akhir integrasi agar tetap sejalan dengan milestone M3: EVENT MODULE (W08). Hasil 'Event publish tampil benar' saya pastikan bisa langsung dipakai tim tanpa nunggu penjelasan tambahan."
 Output Ikram:
 - Artefak UI+Frontend harian selesai: Update kartu event dan badge status FE.
 - Outcome harian terukur: Event publish tampil benar.
@@ -448,7 +476,9 @@ Lampiran Ikram (Bukti Screenshot):
 
 ### Day 40 (Jumat, 20 Mar 2026): Uji E2E event governance
 Status: [RENCANA]
-Milestone/Task: M3 EVENT MODULE / Event Management
+Milestone/Group: M3: EVENT MODULE (W08)
+Task Referensi Farchan: Logic Approval & Publish API
+Task Referensi Ikram: UI Approval Flow & Status
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Uji E2E draft sampai approval sampai publish.
@@ -477,12 +507,14 @@ Lampiran Ikram (Bukti Screenshot):
 ## PEKAN 9 (W09): Participation Flow
 
 Status Pekan: Proyeksi
-Milestone Aktif: M4 PARTICIPATION
-Task Utama: Join dan Completion
+Milestone Aktif: M4: PARTICIPATION (W09)
+Task Utama: Farchan - API Join & History Partisipasi | Ikram - UI Button Join & History User
 
 ### Day 41 (Senin, 23 Mar 2026): Rule join event
 Status: [RENCANA]
-Milestone/Task: M4 PARTICIPATION / Join dan Completion
+Milestone/Group: M4: PARTICIPATION (W09)
+Task Referensi Farchan: API Join & History Partisipasi
+Task Referensi Ikram: UI Button Join & History User
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Implement rule join event quota duplicate status.
@@ -510,7 +542,9 @@ Lampiran Ikram (Bukti Screenshot):
 
 ### Day 42 (Selasa, 24 Mar 2026): Riwayat partisipasi
 Status: [RENCANA]
-Milestone/Task: M4 PARTICIPATION / Join dan Completion
+Milestone/Group: M4: PARTICIPATION (W09)
+Task Referensi Farchan: API Join & History Partisipasi
+Task Referensi Ikram: UI Button Join & History User
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Implement endpoint riwayat partisipasi.
@@ -538,7 +572,9 @@ Lampiran Ikram (Bukti Screenshot):
 
 ### Day 43 (Rabu, 25 Mar 2026): Complete event oleh KSH
 Status: [RENCANA]
-Milestone/Task: M4 PARTICIPATION / Join dan Completion
+Milestone/Group: M4: PARTICIPATION (W09)
+Task Referensi Farchan: API Complete & Attendance
+Task Referensi Ikram: UI Checklist & Complete Action
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Implement complete event oleh KSH.
@@ -566,12 +602,14 @@ Lampiran Ikram (Bukti Screenshot):
 
 ### Day 44 (Kamis, 26 Mar 2026): Checklist attendance
 Status: [RENCANA]
-Milestone/Task: M4 PARTICIPATION / Join dan Completion
+Milestone/Group: M4: PARTICIPATION (W09)
+Task Referensi Farchan: API Complete & Attendance
+Task Referensi Ikram: UI Checklist & Complete Action
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Validasi checklist kehadiran dan transisi status.
 Uraian Kegiatan (Logbook):
-"Aktivitas utama saya hari ini adalah Validasi checklist kehadiran dan transisi status. Saya jalankan validasi dari skenario normal sampai edge case, terus saya cocokkan hasil aktual dengan acceptance criteria di milestone M4 PARTICIPATION / Join dan Completion. Setelah itu saya catat poin koreksi dan konfirmasi final biar 'Attendance sinkron' punya dasar teknis yang jelas."
+"Aktivitas utama saya hari ini adalah Validasi checklist kehadiran dan transisi status. Saya jalankan validasi dari skenario normal sampai edge case, terus saya cocokkan hasil aktual dengan acceptance criteria di milestone M4: PARTICIPATION (W09). Setelah itu saya catat poin koreksi dan konfirmasi final biar 'Attendance sinkron' punya dasar teknis yang jelas."
 Output Farchan:
 - Artefak UX+Backend harian selesai: Validasi checklist kehadiran dan transisi status.
 - Outcome harian terukur: Attendance sinkron.
@@ -594,7 +632,9 @@ Lampiran Ikram (Bukti Screenshot):
 
 ### Day 45 (Jumat, 27 Mar 2026): Retest participation flow
 Status: [RENCANA]
-Milestone/Task: M4 PARTICIPATION / Join dan Completion
+Milestone/Group: M4: PARTICIPATION (W09)
+Task Referensi Farchan: API Complete & Attendance
+Task Referensi Ikram: UI Checklist & Complete Action
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Retest join attendance complete.
@@ -623,12 +663,14 @@ Lampiran Ikram (Bukti Screenshot):
 ## PEKAN 10 (W10): Submit Report
 
 Status Pekan: Proyeksi
-Milestone Aktif: M4 PARTICIPATION
-Task Utama: Reporting Submission
+Milestone Aktif: M5: REPORTING (W10)
+Task Utama: Farchan - API Submit Report & Payload | Ikram - UI Wizard Report Step 1-2
 
 ### Day 46 (Senin, 30 Mar 2026): Payload wizard report
 Status: [RENCANA]
-Milestone/Task: M4 PARTICIPATION / Reporting Submission
+Milestone/Group: M5: REPORTING (W10)
+Task Referensi Farchan: API Submit Report & Payload
+Task Referensi Ikram: UI Wizard Report Step 1-2
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Finalkan payload report step 1 dan step 2.
@@ -656,7 +698,9 @@ Lampiran Ikram (Bukti Screenshot):
 
 ### Day 47 (Selasa, 31 Mar 2026): Submit report endpoint
 Status: [RENCANA]
-Milestone/Task: M4 PARTICIPATION / Reporting Submission
+Milestone/Group: M5: REPORTING (W10)
+Task Referensi Farchan: API Submit Report & Payload
+Task Referensi Ikram: UI Wizard Report Step 1-2
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Implement submit report endpoint beserta validasi.
@@ -684,12 +728,14 @@ Lampiran Ikram (Bukti Screenshot):
 
 ### Day 48 (Rabu, 1 Apr 2026): Validasi bukti laporan
 Status: [RENCANA]
-Milestone/Task: M4 PARTICIPATION / Reporting Submission
+Milestone/Group: M5: REPORTING (W10)
+Task Referensi Farchan: Validasi Proof & E2E Status
+Task Referensi Ikram: Validasi Form & UI History
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Atur validasi media proof laporan.
 Uraian Kegiatan (Logbook):
-"Aktivitas utama saya hari ini adalah Atur validasi media proof laporan. Saya jalankan validasi dari skenario normal sampai edge case, terus saya cocokkan hasil aktual dengan acceptance criteria di milestone M4 PARTICIPATION / Reporting Submission. Setelah itu saya catat poin koreksi dan konfirmasi final biar 'Bukti laporan tervalidasi' punya dasar teknis yang jelas."
+"Aktivitas utama saya hari ini adalah Atur validasi media proof laporan. Saya jalankan validasi dari skenario normal sampai edge case, terus saya cocokkan hasil aktual dengan acceptance criteria di milestone M5: REPORTING (W10). Setelah itu saya catat poin koreksi dan konfirmasi final biar 'Bukti laporan tervalidasi' punya dasar teknis yang jelas."
 Output Farchan:
 - Artefak UX+Backend harian selesai: Atur validasi media proof laporan.
 - Outcome harian terukur: Bukti laporan tervalidasi.
@@ -712,12 +758,14 @@ Lampiran Ikram (Bukti Screenshot):
 
 ### Day 49 (Kamis, 2 Apr 2026): Sinkron status report
 Status: [RENCANA]
-Milestone/Task: M4 PARTICIPATION / Reporting Submission
+Milestone/Group: M5: REPORTING (W10)
+Task Referensi Farchan: Validasi Proof & E2E Status
+Task Referensi Ikram: Validasi Form & UI History
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Sinkron status report pending di backend.
 Uraian Kegiatan (Logbook):
-"Aktivitas utama saya hari ini adalah Sinkron status report pending di backend. Saya jalankan validasi dari skenario normal sampai edge case, terus saya cocokkan hasil aktual dengan acceptance criteria di milestone M4 PARTICIPATION / Reporting Submission. Setelah itu saya catat poin koreksi dan konfirmasi final biar 'History report sinkron' punya dasar teknis yang jelas."
+"Aktivitas utama saya hari ini adalah Sinkron status report pending di backend. Saya jalankan validasi dari skenario normal sampai edge case, terus saya cocokkan hasil aktual dengan acceptance criteria di milestone M5: REPORTING (W10). Setelah itu saya catat poin koreksi dan konfirmasi final biar 'History report sinkron' punya dasar teknis yang jelas."
 Output Farchan:
 - Artefak UX+Backend harian selesai: Sinkron status report pending di backend.
 - Outcome harian terukur: History report sinkron.
@@ -740,7 +788,9 @@ Lampiran Ikram (Bukti Screenshot):
 
 ### Day 50 (Jumat, 3 Apr 2026): E2E reporting
 Status: [RENCANA]
-Milestone/Task: M4 PARTICIPATION / Reporting Submission
+Milestone/Group: M5: REPORTING (W10)
+Task Referensi Farchan: Validasi Proof & E2E Status
+Task Referensi Ikram: Validasi Form & UI History
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Uji E2E report submission.
@@ -757,7 +807,7 @@ Lampiran Farchan (Bukti Screenshot):
 #### Entri Ikram (UI+Frontend)
 Aktivitas: Refinement wizard report di UI/FE.
 Uraian Kegiatan (Logbook):
-"Hari ini saya ngerjain Refinement wizard report di UI/FE dalam konteks 'E2E reporting'. Pengerjaan saya alirin dari setup komponen, sinkronisasi state, sampai cek akhir integrasi agar tetap sejalan dengan milestone M4 PARTICIPATION / Reporting Submission. Hasil 'Reporting stabil' saya pastikan bisa langsung dipakai tim tanpa nunggu penjelasan tambahan."
+"Hari ini saya ngerjain Refinement wizard report di UI/FE dalam konteks 'E2E reporting'. Pengerjaan saya alirin dari setup komponen, sinkronisasi state, sampai cek akhir integrasi agar tetap sejalan dengan milestone M5: REPORTING (W10). Hasil 'Reporting stabil' saya pastikan bisa langsung dipakai tim tanpa nunggu penjelasan tambahan."
 Output Ikram:
 - Artefak UI+Frontend harian selesai: Refinement wizard report di UI/FE.
 - Outcome harian terukur: Reporting stabil.
@@ -769,12 +819,14 @@ Lampiran Ikram (Bukti Screenshot):
 ## PEKAN 11 (W11): Verify dan Scoring Dasar
 
 Status Pekan: Proyeksi
-Milestone Aktif: M5 GAMIFICATION
-Task Utama: Verify dan Scoring
+Milestone Aktif: M6: VERIFICATION (W11)
+Task Utama: Farchan - API Verify & Scoring Tambah XP | Ikram - Panel Verifikasi Admin/Mod
 
 ### Day 51 (Senin, 6 Apr 2026): Verify reject reason
 Status: [RENCANA]
-Milestone/Task: M5 GAMIFICATION / Verify dan Scoring
+Milestone/Group: M6: VERIFICATION (W11)
+Task Referensi Farchan: API Verify & Scoring Tambah XP
+Task Referensi Ikram: Panel Verifikasi Admin/Mod
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Implement verify reject dan reason backend.
@@ -802,7 +854,9 @@ Lampiran Ikram (Bukti Screenshot):
 
 ### Day 52 (Selasa, 7 Apr 2026): Scoring dasar
 Status: [RENCANA]
-Milestone/Task: M5 GAMIFICATION / Verify dan Scoring
+Milestone/Group: M6: VERIFICATION (W11)
+Task Referensi Farchan: API Verify & Scoring Tambah XP
+Task Referensi Ikram: Panel Verifikasi Admin/Mod
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Implement scoring dasar saat verify.
@@ -819,7 +873,7 @@ Lampiran Farchan (Bukti Screenshot):
 #### Entri Ikram (UI+Frontend)
 Aktivitas: Tampilkan feedback status dan skor di FE.
 Uraian Kegiatan (Logbook):
-"Hari ini saya ngerjain Tampilkan feedback status dan skor di FE dalam konteks 'Scoring dasar'. Pengerjaan saya alirin dari setup komponen, sinkronisasi state, sampai cek akhir integrasi agar tetap sejalan dengan milestone M5 GAMIFICATION / Verify dan Scoring. Hasil 'Scoring sinkron' saya pastikan bisa langsung dipakai tim tanpa nunggu penjelasan tambahan."
+"Hari ini saya ngerjain Tampilkan feedback status dan skor di FE dalam konteks 'Scoring dasar'. Pengerjaan saya alirin dari setup komponen, sinkronisasi state, sampai cek akhir integrasi agar tetap sejalan dengan milestone M6: VERIFICATION (W11). Hasil 'Scoring sinkron' saya pastikan bisa langsung dipakai tim tanpa nunggu penjelasan tambahan."
 Output Ikram:
 - Artefak UI+Frontend harian selesai: Tampilkan feedback status dan skor di FE.
 - Outcome harian terukur: Scoring sinkron.
@@ -830,12 +884,14 @@ Lampiran Ikram (Bukti Screenshot):
 
 ### Day 53 (Rabu, 8 Apr 2026): Audit trail report
 Status: [RENCANA]
-Milestone/Task: M5 GAMIFICATION / Verify dan Scoring
+Milestone/Group: M6: VERIFICATION (W11)
+Task Referensi Farchan: Audit Trail & Status Notification
+Task Referensi Ikram: UI Timeline & Indicator FE
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Tambah audit trail status report.
 Uraian Kegiatan (Logbook):
-"Aktivitas utama saya hari ini adalah Tambah audit trail status report. Saya jalankan validasi dari skenario normal sampai edge case, terus saya cocokkan hasil aktual dengan acceptance criteria di milestone M5 GAMIFICATION / Verify dan Scoring. Setelah itu saya catat poin koreksi dan konfirmasi final biar 'Audit trail terbaca' punya dasar teknis yang jelas."
+"Aktivitas utama saya hari ini adalah Tambah audit trail status report. Saya jalankan validasi dari skenario normal sampai edge case, terus saya cocokkan hasil aktual dengan acceptance criteria di milestone M6: VERIFICATION (W11). Setelah itu saya catat poin koreksi dan konfirmasi final biar 'Audit trail terbaca' punya dasar teknis yang jelas."
 Output Farchan:
 - Artefak UX+Backend harian selesai: Tambah audit trail status report.
 - Outcome harian terukur: Audit trail terbaca.
@@ -858,7 +914,9 @@ Lampiran Ikram (Bukti Screenshot):
 
 ### Day 54 (Kamis, 9 Apr 2026): Notifikasi status report
 Status: [RENCANA]
-Milestone/Task: M5 GAMIFICATION / Verify dan Scoring
+Milestone/Group: M6: VERIFICATION (W11)
+Task Referensi Farchan: Audit Trail & Status Notification
+Task Referensi Ikram: UI Timeline & Indicator FE
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Stabilkan notifikasi status report backend.
@@ -886,7 +944,9 @@ Lampiran Ikram (Bukti Screenshot):
 
 ### Day 55 (Jumat, 10 Apr 2026): Retest verify scoring
 Status: [RENCANA]
-Milestone/Task: M5 GAMIFICATION / Verify dan Scoring
+Milestone/Group: M6: VERIFICATION (W11)
+Task Referensi Farchan: Audit Trail & Status Notification
+Task Referensi Ikram: UI Timeline & Indicator FE
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Retest verify dan scoring end-to-end.
@@ -915,12 +975,14 @@ Lampiran Ikram (Bukti Screenshot):
 ## PEKAN 12 (W12): XP dan Leaderboard
 
 Status Pekan: Proyeksi
-Milestone Aktif: M5 GAMIFICATION
-Task Utama: XP dan Leaderboard
+Milestone Aktif: M7: GAMIFICATION (W12)
+Task Utama: Farchan - Aggregation & Rank Update API | Ikram - UI Leaderboard & Rank Card
 
 ### Day 56 (Senin, 13 Apr 2026): Formula XP final
 Status: [RENCANA]
-Milestone/Task: M5 GAMIFICATION / XP dan Leaderboard
+Milestone/Group: M7: GAMIFICATION (W12)
+Task Referensi Farchan: Aggregation & Rank Update API
+Task Referensi Ikram: UI Leaderboard & Rank Card
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Finalkan rumus XP kampung dan pilar.
@@ -948,12 +1010,14 @@ Lampiran Ikram (Bukti Screenshot):
 
 ### Day 57 (Selasa, 14 Apr 2026): Sinkron update rank
 Status: [RENCANA]
-Milestone/Task: M5 GAMIFICATION / XP dan Leaderboard
+Milestone/Group: M7: GAMIFICATION (W12)
+Task Referensi Farchan: Aggregation & Rank Update API
+Task Referensi Ikram: UI Leaderboard & Rank Card
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Sinkron update XP pasca verify.
 Uraian Kegiatan (Logbook):
-"Aktivitas utama saya hari ini adalah Sinkron update XP pasca verify. Saya jalankan validasi dari skenario normal sampai edge case, terus saya cocokkan hasil aktual dengan acceptance criteria di milestone M5 GAMIFICATION / XP dan Leaderboard. Setelah itu saya catat poin koreksi dan konfirmasi final biar 'Rank update sinkron' punya dasar teknis yang jelas."
+"Aktivitas utama saya hari ini adalah Sinkron update XP pasca verify. Saya jalankan validasi dari skenario normal sampai edge case, terus saya cocokkan hasil aktual dengan acceptance criteria di milestone M7: GAMIFICATION (W12). Setelah itu saya catat poin koreksi dan konfirmasi final biar 'Rank update sinkron' punya dasar teknis yang jelas."
 Output Farchan:
 - Artefak UX+Backend harian selesai: Sinkron update XP pasca verify.
 - Outcome harian terukur: Rank update sinkron.
@@ -976,7 +1040,9 @@ Lampiran Ikram (Bukti Screenshot):
 
 ### Day 58 (Rabu, 15 Apr 2026): Service progres pilar
 Status: [RENCANA]
-Milestone/Task: M5 GAMIFICATION / XP dan Leaderboard
+Milestone/Group: M7: GAMIFICATION (W12)
+Task Referensi Farchan: Pilar Progress & Optimasi Query
+Task Referensi Ikram: Visual Chart 4 Pilar & CTA
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Stabilkan service progres 4 pilar.
@@ -1004,7 +1070,9 @@ Lampiran Ikram (Bukti Screenshot):
 
 ### Day 59 (Kamis, 16 Apr 2026): Rule akses leaderboard
 Status: [RENCANA]
-Milestone/Task: M5 GAMIFICATION / XP dan Leaderboard
+Milestone/Group: M7: GAMIFICATION (W12)
+Task Referensi Farchan: Pilar Progress & Optimasi Query
+Task Referensi Ikram: Visual Chart 4 Pilar & CTA
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Atur aturan akses leaderboard.
@@ -1032,7 +1100,9 @@ Lampiran Ikram (Bukti Screenshot):
 
 ### Day 60 (Jumat, 17 Apr 2026): E2E report ke rank
 Status: [RENCANA]
-Milestone/Task: M5 GAMIFICATION / XP dan Leaderboard
+Milestone/Group: M7: GAMIFICATION (W12)
+Task Referensi Farchan: Pilar Progress & Optimasi Query
+Task Referensi Ikram: Visual Chart 4 Pilar & CTA
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Uji E2E report ke XP ke leaderboard.
@@ -1049,7 +1119,7 @@ Lampiran Farchan (Bukti Screenshot):
 #### Entri Ikram (UI+Frontend)
 Aktivitas: Polish UI/FE leaderboard.
 Uraian Kegiatan (Logbook):
-"Hari ini saya ngerjain Polish UI/FE leaderboard dalam konteks 'E2E report ke rank'. Pengerjaan saya alirin dari setup komponen, sinkronisasi state, sampai cek akhir integrasi agar tetap sejalan dengan milestone M5 GAMIFICATION / XP dan Leaderboard. Hasil 'Leaderboard stabil' saya pastikan bisa langsung dipakai tim tanpa nunggu penjelasan tambahan."
+"Hari ini saya ngerjain Polish UI/FE leaderboard dalam konteks 'E2E report ke rank'. Pengerjaan saya alirin dari setup komponen, sinkronisasi state, sampai cek akhir integrasi agar tetap sejalan dengan milestone M7: GAMIFICATION (W12). Hasil 'Leaderboard stabil' saya pastikan bisa langsung dipakai tim tanpa nunggu penjelasan tambahan."
 Output Ikram:
 - Artefak UI+Frontend harian selesai: Polish UI/FE leaderboard.
 - Outcome harian terukur: Leaderboard stabil.
@@ -1061,12 +1131,14 @@ Lampiran Ikram (Bukti Screenshot):
 ## PEKAN 13 (W13): Sertifikat dan Reward
 
 Status Pekan: Proyeksi
-Milestone Aktif: M6 REWARD dan MITRA
-Task Utama: Certificate dan Reward
+Milestone Aktif: M8: REWARD (W13)
+Task Utama: Farchan - Generate Sertifikat & Rule Konversi | Ikram - UI History Sertifikat & Katalog
 
 ### Day 61 (Senin, 20 Apr 2026): Rule sertifikat
 Status: [RENCANA]
-Milestone/Task: M6 REWARD dan MITRA / Certificate dan Reward
+Milestone/Group: M8: REWARD (W13)
+Task Referensi Farchan: Generate Sertifikat & Rule Konversi
+Task Referensi Ikram: UI History Sertifikat & Katalog
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Definisikan rule 1 kegiatan 1 sertifikat.
@@ -1094,7 +1166,9 @@ Lampiran Ikram (Bukti Screenshot):
 
 ### Day 62 (Selasa, 21 Apr 2026): Penerbitan sertifikat
 Status: [RENCANA]
-Milestone/Task: M6 REWARD dan MITRA / Certificate dan Reward
+Milestone/Group: M8: REWARD (W13)
+Task Referensi Farchan: Generate Sertifikat & Rule Konversi
+Task Referensi Ikram: UI History Sertifikat & Katalog
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Implement penerbitan sertifikat.
@@ -1122,7 +1196,9 @@ Lampiran Ikram (Bukti Screenshot):
 
 ### Day 63 (Rabu, 22 Apr 2026): Konversi poin voucher
 Status: [RENCANA]
-Milestone/Task: M6 REWARD dan MITRA / Certificate dan Reward
+Milestone/Group: M8: REWARD (W13)
+Task Referensi Farchan: Generate Sertifikat & Rule Konversi
+Task Referensi Ikram: UI History Sertifikat & Katalog
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Definisikan konversi poin ke voucher.
@@ -1150,7 +1226,9 @@ Lampiran Ikram (Bukti Screenshot):
 
 ### Day 64 (Kamis, 23 Apr 2026): Redeem poin
 Status: [RENCANA]
-Milestone/Task: M6 REWARD dan MITRA / Certificate dan Reward
+Milestone/Group: M8: REWARD (W13)
+Task Referensi Farchan: API Redeem Poin & Retest
+Task Referensi Ikram: Integrasi Flow Redeem Poin
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Implement redeem poin dan decrement saldo.
@@ -1178,7 +1256,9 @@ Lampiran Ikram (Bukti Screenshot):
 
 ### Day 65 (Jumat, 24 Apr 2026): Retest reward flow
 Status: [RENCANA]
-Milestone/Task: M6 REWARD dan MITRA / Certificate dan Reward
+Milestone/Group: M8: REWARD (W13)
+Task Referensi Farchan: API Redeem Poin & Retest
+Task Referensi Ikram: Integrasi Flow Redeem Poin
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Uji E2E sertifikat dan redeem.
@@ -1207,12 +1287,14 @@ Lampiran Ikram (Bukti Screenshot):
 ## PEKAN 14 (W14): Kolaborasi Mitra
 
 Status Pekan: Proyeksi
-Milestone Aktif: M6 REWARD dan MITRA
-Task Utama: Mitra External Flow
+Milestone Aktif: M9: MITRA (W14)
+Task Utama: Farchan - Schema & Public API Mitra | Ikram - Landing Page Mitra & Submit FE
 
 ### Day 66 (Senin, 27 Apr 2026): Schema request mitra
 Status: [RENCANA]
-Milestone/Task: M6 REWARD dan MITRA / Mitra External Flow
+Milestone/Group: M9: MITRA (W14)
+Task Referensi Farchan: Schema & Public API Mitra
+Task Referensi Ikram: Landing Page Mitra & Submit FE
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Definisikan schema request mitra dan scope.
@@ -1240,7 +1322,9 @@ Lampiran Ikram (Bukti Screenshot):
 
 ### Day 67 (Selasa, 28 Apr 2026): Submit request mitra
 Status: [RENCANA]
-Milestone/Task: M6 REWARD dan MITRA / Mitra External Flow
+Milestone/Group: M9: MITRA (W14)
+Task Referensi Farchan: Schema & Public API Mitra
+Task Referensi Ikram: Landing Page Mitra & Submit FE
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Implement endpoint submit mitra status pending.
@@ -1268,7 +1352,9 @@ Lampiran Ikram (Bukti Screenshot):
 
 ### Day 68 (Rabu, 29 Apr 2026): Routing request mitra
 Status: [RENCANA]
-Milestone/Task: M6 REWARD dan MITRA / Mitra External Flow
+Milestone/Group: M9: MITRA (W14)
+Task Referensi Farchan: Routing & Approval Mitra API
+Task Referensi Ikram: Inbox Admin & Review Action FE
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Implement routing request by scope.
@@ -1296,7 +1382,9 @@ Lampiran Ikram (Bukti Screenshot):
 
 ### Day 69 (Kamis, 30 Apr 2026): Approve reject mitra
 Status: [RENCANA]
-Milestone/Task: M6 REWARD dan MITRA / Mitra External Flow
+Milestone/Group: M9: MITRA (W14)
+Task Referensi Farchan: Routing & Approval Mitra API
+Task Referensi Ikram: Inbox Admin & Review Action FE
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Implement approve reject request mitra.
@@ -1324,12 +1412,14 @@ Lampiran Ikram (Bukti Screenshot):
 
 ### Day 70 (Jumat, 1 Mei 2026): E2E governance mitra
 Status: [RENCANA]
-Milestone/Task: M6 REWARD dan MITRA / Mitra External Flow
+Milestone/Group: M9: MITRA (W14)
+Task Referensi Farchan: Routing & Approval Mitra API
+Task Referensi Ikram: Inbox Admin & Review Action FE
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Uji E2E submit sampai review mitra.
 Uraian Kegiatan (Logbook):
-"Aktivitas utama saya hari ini adalah Uji E2E submit sampai review mitra. Saya jalankan validasi dari skenario normal sampai edge case, terus saya cocokkan hasil aktual dengan acceptance criteria di milestone M6 REWARD dan MITRA / Mitra External Flow. Setelah itu saya catat poin koreksi dan konfirmasi final biar 'Governance mitra stabil' punya dasar teknis yang jelas."
+"Aktivitas utama saya hari ini adalah Uji E2E submit sampai review mitra. Saya jalankan validasi dari skenario normal sampai edge case, terus saya cocokkan hasil aktual dengan acceptance criteria di milestone M9: MITRA (W14). Setelah itu saya catat poin koreksi dan konfirmasi final biar 'Governance mitra stabil' punya dasar teknis yang jelas."
 Output Farchan:
 - Artefak UX+Backend harian selesai: Uji E2E submit sampai review mitra.
 - Outcome harian terukur: Governance mitra stabil.
@@ -1353,17 +1443,19 @@ Lampiran Ikram (Bukti Screenshot):
 ## PEKAN 15 (W15): Security Hardening
 
 Status Pekan: Proyeksi
-Milestone Aktif: M7 SECURITY dan INTEGRATION
-Task Utama: Hardening Runtime
+Milestone Aktif: M10: SECURITY (W15)
+Task Utama: Farchan - Threat Model & Input Validation | Ikram - Audit UI Sensitif & Sync Validasi
 
 ### Day 71 (Senin, 4 Mei 2026): Threat modeling
 Status: [RENCANA]
-Milestone/Task: M7 SECURITY dan INTEGRATION / Hardening Runtime
+Milestone/Group: M10: SECURITY (W15)
+Task Referensi Farchan: Threat Model & Input Validation
+Task Referensi Ikram: Audit UI Sensitif & Sync Validasi
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Lakukan threat modeling dan checklist attack surface.
 Uraian Kegiatan (Logbook):
-"Hari ini saya mengerjakan Lakukan threat modeling dan checklist attack surface pada konteks 'Threat modeling'. Pekerjaan saya jalankan bertahap dari perapihan kebutuhan, eksekusi inti, sampai pengecekan hasil agar sesuai milestone M7 SECURITY dan INTEGRATION / Hardening Runtime. Setelah selesai, saya pastikan 'Daftar risiko keamanan' sudah siap dipakai tanpa nunggu klarifikasi tambahan."
+"Hari ini saya mengerjakan Lakukan threat modeling dan checklist attack surface pada konteks 'Threat modeling'. Pekerjaan saya jalankan bertahap dari perapihan kebutuhan, eksekusi inti, sampai pengecekan hasil agar sesuai milestone M10: SECURITY (W15). Setelah selesai, saya pastikan 'Daftar risiko keamanan' sudah siap dipakai tanpa nunggu klarifikasi tambahan."
 Output Farchan:
 - Artefak UX+Backend harian selesai: Lakukan threat modeling dan checklist attack surface.
 - Outcome harian terukur: Daftar risiko keamanan.
@@ -1375,7 +1467,7 @@ Lampiran Farchan (Bukti Screenshot):
 #### Entri Ikram (UI+Frontend)
 Aktivitas: Audit area UI/FE sensitif untuk produksi.
 Uraian Kegiatan (Logbook):
-"Aktivitas hari ini saya adalah Audit area UI/FE sensitif untuk produksi. Saya validasi tampilan, transisi state, dan respons error/loading supaya behavior FE tidak beda dengan aturan backend di milestone M7 SECURITY dan INTEGRATION / Hardening Runtime. Setelah sinkronisasi final, 'Daftar risiko keamanan' saya pastikan sudah jelas dan bisa ditracking hasilnya."
+"Aktivitas hari ini saya adalah Audit area UI/FE sensitif untuk produksi. Saya validasi tampilan, transisi state, dan respons error/loading supaya behavior FE tidak beda dengan aturan backend di milestone M10: SECURITY (W15). Setelah sinkronisasi final, 'Daftar risiko keamanan' saya pastikan sudah jelas dan bisa ditracking hasilnya."
 Output Ikram:
 - Artefak UI+Frontend harian selesai: Audit area UI/FE sensitif untuk produksi.
 - Outcome harian terukur: Daftar risiko keamanan.
@@ -1386,12 +1478,14 @@ Lampiran Ikram (Bukti Screenshot):
 
 ### Day 72 (Selasa, 5 Mei 2026): Hardening validasi input
 Status: [RENCANA]
-Milestone/Task: M7 SECURITY dan INTEGRATION / Hardening Runtime
+Milestone/Group: M10: SECURITY (W15)
+Task Referensi Farchan: Threat Model & Input Validation
+Task Referensi Ikram: Audit UI Sensitif & Sync Validasi
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Perketat input validation backend.
 Uraian Kegiatan (Logbook):
-"Hari ini saya mengerjakan Perketat input validation backend pada konteks 'Hardening validasi input'. Pekerjaan saya jalankan bertahap dari perapihan kebutuhan, eksekusi inti, sampai pengecekan hasil agar sesuai milestone M7 SECURITY dan INTEGRATION / Hardening Runtime. Setelah selesai, saya pastikan 'Validasi FE-BE konsisten' sudah siap dipakai tanpa nunggu klarifikasi tambahan."
+"Hari ini saya mengerjakan Perketat input validation backend pada konteks 'Hardening validasi input'. Pekerjaan saya jalankan bertahap dari perapihan kebutuhan, eksekusi inti, sampai pengecekan hasil agar sesuai milestone M10: SECURITY (W15). Setelah selesai, saya pastikan 'Validasi FE-BE konsisten' sudah siap dipakai tanpa nunggu klarifikasi tambahan."
 Output Farchan:
 - Artefak UX+Backend harian selesai: Perketat input validation backend.
 - Outcome harian terukur: Validasi FE-BE konsisten.
@@ -1403,7 +1497,7 @@ Lampiran Farchan (Bukti Screenshot):
 #### Entri Ikram (UI+Frontend)
 Aktivitas: Sinkron validasi input di FE.
 Uraian Kegiatan (Logbook):
-"Aktivitas hari ini saya adalah Sinkron validasi input di FE. Saya validasi tampilan, transisi state, dan respons error/loading supaya behavior FE tidak beda dengan aturan backend di milestone M7 SECURITY dan INTEGRATION / Hardening Runtime. Setelah sinkronisasi final, 'Validasi FE-BE konsisten' saya pastikan sudah jelas dan bisa ditracking hasilnya."
+"Aktivitas hari ini saya adalah Sinkron validasi input di FE. Saya validasi tampilan, transisi state, dan respons error/loading supaya behavior FE tidak beda dengan aturan backend di milestone M10: SECURITY (W15). Setelah sinkronisasi final, 'Validasi FE-BE konsisten' saya pastikan sudah jelas dan bisa ditracking hasilnya."
 Output Ikram:
 - Artefak UI+Frontend harian selesai: Sinkron validasi input di FE.
 - Outcome harian terukur: Validasi FE-BE konsisten.
@@ -1414,12 +1508,14 @@ Lampiran Ikram (Bukti Screenshot):
 
 ### Day 73 (Rabu, 6 Mei 2026): Rate limit dan session policy
 Status: [RENCANA]
-Milestone/Task: M7 SECURITY dan INTEGRATION / Hardening Runtime
+Milestone/Group: M10: SECURITY (W15)
+Task Referensi Farchan: Rate Limit, CORS & Regression
+Task Referensi Ikram: Error Handling FE & Responsiveness
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Aktifkan rate limit dan session policy.
 Uraian Kegiatan (Logbook):
-"Hari ini saya mengerjakan Aktifkan rate limit dan session policy pada konteks 'Rate limit dan session policy'. Pekerjaan saya jalankan bertahap dari perapihan kebutuhan, eksekusi inti, sampai pengecekan hasil agar sesuai milestone M7 SECURITY dan INTEGRATION / Hardening Runtime. Setelah selesai, saya pastikan 'Throttling flow aman' sudah siap dipakai tanpa nunggu klarifikasi tambahan."
+"Hari ini saya mengerjakan Aktifkan rate limit dan session policy pada konteks 'Rate limit dan session policy'. Pekerjaan saya jalankan bertahap dari perapihan kebutuhan, eksekusi inti, sampai pengecekan hasil agar sesuai milestone M10: SECURITY (W15). Setelah selesai, saya pastikan 'Throttling flow aman' sudah siap dipakai tanpa nunggu klarifikasi tambahan."
 Output Farchan:
 - Artefak UX+Backend harian selesai: Aktifkan rate limit dan session policy.
 - Outcome harian terukur: Throttling flow aman.
@@ -1442,12 +1538,14 @@ Lampiran Ikram (Bukti Screenshot):
 
 ### Day 74 (Kamis, 7 Mei 2026): CORS dan security headers
 Status: [RENCANA]
-Milestone/Task: M7 SECURITY dan INTEGRATION / Hardening Runtime
+Milestone/Group: M10: SECURITY (W15)
+Task Referensi Farchan: Rate Limit, CORS & Regression
+Task Referensi Ikram: Error Handling FE & Responsiveness
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Konfigurasi CORS allowlist dan security headers.
 Uraian Kegiatan (Logbook):
-"Hari ini saya mengerjakan Konfigurasi CORS allowlist dan security headers pada konteks 'CORS dan security headers'. Pekerjaan saya jalankan bertahap dari perapihan kebutuhan, eksekusi inti, sampai pengecekan hasil agar sesuai milestone M7 SECURITY dan INTEGRATION / Hardening Runtime. Setelah selesai, saya pastikan 'CORS security pass' sudah siap dipakai tanpa nunggu klarifikasi tambahan."
+"Hari ini saya mengerjakan Konfigurasi CORS allowlist dan security headers pada konteks 'CORS dan security headers'. Pekerjaan saya jalankan bertahap dari perapihan kebutuhan, eksekusi inti, sampai pengecekan hasil agar sesuai milestone M10: SECURITY (W15). Setelah selesai, saya pastikan 'CORS security pass' sudah siap dipakai tanpa nunggu klarifikasi tambahan."
 Output Farchan:
 - Artefak UX+Backend harian selesai: Konfigurasi CORS allowlist dan security headers.
 - Outcome harian terukur: CORS security pass.
@@ -1470,12 +1568,14 @@ Lampiran Ikram (Bukti Screenshot):
 
 ### Day 75 (Jumat, 8 Mei 2026): Security regression
 Status: [RENCANA]
-Milestone/Task: M7 SECURITY dan INTEGRATION / Hardening Runtime
+Milestone/Group: M10: SECURITY (W15)
+Task Referensi Farchan: Rate Limit, CORS & Regression
+Task Referensi Ikram: Error Handling FE & Responsiveness
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Jalankan security regression dan checklist publish.
 Uraian Kegiatan (Logbook):
-"Hari ini saya mengerjakan Jalankan security regression dan checklist publish pada konteks 'Security regression'. Pekerjaan saya jalankan bertahap dari perapihan kebutuhan, eksekusi inti, sampai pengecekan hasil agar sesuai milestone M7 SECURITY dan INTEGRATION / Hardening Runtime. Setelah selesai, saya pastikan 'Baseline security siap' sudah siap dipakai tanpa nunggu klarifikasi tambahan."
+"Hari ini saya mengerjakan Jalankan security regression dan checklist publish pada konteks 'Security regression'. Pekerjaan saya jalankan bertahap dari perapihan kebutuhan, eksekusi inti, sampai pengecekan hasil agar sesuai milestone M10: SECURITY (W15). Setelah selesai, saya pastikan 'Baseline security siap' sudah siap dipakai tanpa nunggu klarifikasi tambahan."
 Output Farchan:
 - Artefak UX+Backend harian selesai: Jalankan security regression dan checklist publish.
 - Outcome harian terukur: Baseline security siap.
@@ -1499,12 +1599,13 @@ Lampiran Ikram (Bukti Screenshot):
 ## PEKAN 16 (W16): Integrasi Total
 
 Status Pekan: Proyeksi
-Milestone Aktif: M7 SECURITY dan INTEGRATION
-Task Utama: Integrasi dan Demo
+Milestone Aktif: M11: INTEGRATION (W16)
+Task Utama: Berdua - Lintas Modul & Skenario Demo
 
 ### Day 76 (Senin, 11 Mei 2026): Integrasi lintas modul round 1
 Status: [RENCANA]
-Milestone/Task: M7 SECURITY dan INTEGRATION / Integrasi dan Demo
+Milestone/Group: M11: INTEGRATION (W16)
+Task Referensi Berdua: Lintas Modul & Skenario Demo
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Integrasi modul lintas domain round 1.
@@ -1532,7 +1633,8 @@ Lampiran Ikram (Bukti Screenshot):
 
 ### Day 77 (Selasa, 12 Mei 2026): Skenario demo role
 Status: [RENCANA]
-Milestone/Task: M7 SECURITY dan INTEGRATION / Integrasi dan Demo
+Milestone/Group: M11: INTEGRATION (W16)
+Task Referensi Berdua: Lintas Modul & Skenario Demo
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Susun skenario demo per role.
@@ -1549,7 +1651,7 @@ Lampiran Farchan (Bukti Screenshot):
 #### Entri Ikram (UI+Frontend)
 Aktivitas: Siapkan alur demo di FE.
 Uraian Kegiatan (Logbook):
-"Hari ini saya ngerjain Siapkan alur demo di FE dalam konteks 'Skenario demo role'. Pengerjaan saya alirin dari setup komponen, sinkronisasi state, sampai cek akhir integrasi agar tetap sejalan dengan milestone M7 SECURITY dan INTEGRATION / Integrasi dan Demo. Hasil 'Script demo v1' saya pastikan bisa langsung dipakai tim tanpa nunggu penjelasan tambahan."
+"Hari ini saya ngerjain Siapkan alur demo di FE dalam konteks 'Skenario demo role'. Pengerjaan saya alirin dari setup komponen, sinkronisasi state, sampai cek akhir integrasi agar tetap sejalan dengan milestone M11: INTEGRATION (W16). Hasil 'Script demo v1' saya pastikan bisa langsung dipakai tim tanpa nunggu penjelasan tambahan."
 Output Ikram:
 - Artefak UI+Frontend harian selesai: Siapkan alur demo di FE.
 - Outcome harian terukur: Script demo v1.
@@ -1560,12 +1662,13 @@ Lampiran Ikram (Bukti Screenshot):
 
 ### Day 78 (Rabu, 13 Mei 2026): Seed data demo
 Status: [RENCANA]
-Milestone/Task: M7 SECURITY dan INTEGRATION / Integrasi dan Demo
+Milestone/Group: M11: INTEGRATION (W16)
+Task Referensi Berdua: Seed Data & Candidate Build
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Siapkan seed data demo realistis.
 Uraian Kegiatan (Logbook):
-"Hari ini saya mengerjakan Siapkan seed data demo realistis pada konteks 'Seed data demo'. Pekerjaan saya jalankan bertahap dari perapihan kebutuhan, eksekusi inti, sampai pengecekan hasil agar sesuai milestone M7 SECURITY dan INTEGRATION / Integrasi dan Demo. Setelah selesai, saya pastikan 'Demo data siap' sudah siap dipakai tanpa nunggu klarifikasi tambahan."
+"Hari ini saya mengerjakan Siapkan seed data demo realistis pada konteks 'Seed data demo'. Pekerjaan saya jalankan bertahap dari perapihan kebutuhan, eksekusi inti, sampai pengecekan hasil agar sesuai milestone M11: INTEGRATION (W16). Setelah selesai, saya pastikan 'Demo data siap' sudah siap dipakai tanpa nunggu klarifikasi tambahan."
 Output Farchan:
 - Artefak UX+Backend harian selesai: Siapkan seed data demo realistis.
 - Outcome harian terukur: Demo data siap.
@@ -1577,7 +1680,7 @@ Lampiran Farchan (Bukti Screenshot):
 #### Entri Ikram (UI+Frontend)
 Aktivitas: Sinkron tampilan FE dengan seed data.
 Uraian Kegiatan (Logbook):
-"Aktivitas hari ini saya adalah Sinkron tampilan FE dengan seed data. Saya validasi tampilan, transisi state, dan respons error/loading supaya behavior FE tidak beda dengan aturan backend di milestone M7 SECURITY dan INTEGRATION / Integrasi dan Demo. Setelah sinkronisasi final, 'Demo data siap' saya pastikan sudah jelas dan bisa ditracking hasilnya."
+"Aktivitas hari ini saya adalah Sinkron tampilan FE dengan seed data. Saya validasi tampilan, transisi state, dan respons error/loading supaya behavior FE tidak beda dengan aturan backend di milestone M11: INTEGRATION (W16). Setelah sinkronisasi final, 'Demo data siap' saya pastikan sudah jelas dan bisa ditracking hasilnya."
 Output Ikram:
 - Artefak UI+Frontend harian selesai: Sinkron tampilan FE dengan seed data.
 - Outcome harian terukur: Demo data siap.
@@ -1588,7 +1691,8 @@ Lampiran Ikram (Bukti Screenshot):
 
 ### Day 79 (Kamis, 14 Mei 2026): Dry run UAT internal
 Status: [RENCANA]
-Milestone/Task: M7 SECURITY dan INTEGRATION / Integrasi dan Demo
+Milestone/Group: M11: INTEGRATION (W16)
+Task Referensi Berdua: Seed Data & Candidate Build
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Lakukan dry run UAT internal.
@@ -1605,7 +1709,7 @@ Lampiran Farchan (Bukti Screenshot):
 #### Entri Ikram (UI+Frontend)
 Aktivitas: Polish UI/FE untuk demo.
 Uraian Kegiatan (Logbook):
-"Hari ini saya ngerjain Polish UI/FE untuk demo dalam konteks 'Dry run UAT internal'. Pengerjaan saya alirin dari setup komponen, sinkronisasi state, sampai cek akhir integrasi agar tetap sejalan dengan milestone M7 SECURITY dan INTEGRATION / Integrasi dan Demo. Hasil 'UAT dry-run notes' saya pastikan bisa langsung dipakai tim tanpa nunggu penjelasan tambahan."
+"Hari ini saya ngerjain Polish UI/FE untuk demo dalam konteks 'Dry run UAT internal'. Pengerjaan saya alirin dari setup komponen, sinkronisasi state, sampai cek akhir integrasi agar tetap sejalan dengan milestone M11: INTEGRATION (W16). Hasil 'UAT dry-run notes' saya pastikan bisa langsung dipakai tim tanpa nunggu penjelasan tambahan."
 Output Ikram:
 - Artefak UI+Frontend harian selesai: Polish UI/FE untuk demo.
 - Outcome harian terukur: UAT dry-run notes.
@@ -1616,7 +1720,8 @@ Lampiran Ikram (Bukti Screenshot):
 
 ### Day 80 (Jumat, 15 Mei 2026): Freeze candidate build
 Status: [RENCANA]
-Milestone/Task: M7 SECURITY dan INTEGRATION / Integrasi dan Demo
+Milestone/Group: M11: INTEGRATION (W16)
+Task Referensi Berdua: Seed Data & Candidate Build
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Freeze candidate build backend.
@@ -1645,12 +1750,13 @@ Lampiran Ikram (Bukti Screenshot):
 ## PEKAN 17 (W17): QA Execution
 
 Status Pekan: Proyeksi
-Milestone Aktif: M8 QA dan BUGFIX
-Task Utama: Testing dan Triage
+Milestone Aktif: M12: QA EXECUTION (W17)
+Task Utama: Berdua - Test Plan & QA Tahap 1
 
 ### Day 81 (Senin, 18 Mei 2026): Finalisasi test case
 Status: [RENCANA]
-Milestone/Task: M8 QA dan BUGFIX / Testing dan Triage
+Milestone/Group: M12: QA EXECUTION (W17)
+Task Referensi Berdua: Test Plan & QA Tahap 1
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Finalisasi test case backend.
@@ -1678,7 +1784,8 @@ Lampiran Ikram (Bukti Screenshot):
 
 ### Day 82 (Selasa, 19 Mei 2026): Eksekusi test domain inti
 Status: [RENCANA]
-Milestone/Task: M8 QA dan BUGFIX / Testing dan Triage
+Milestone/Group: M12: QA EXECUTION (W17)
+Task Referensi Berdua: Test Plan & QA Tahap 1
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Eksekusi test auth event report.
@@ -1706,7 +1813,8 @@ Lampiran Ikram (Bukti Screenshot):
 
 ### Day 83 (Rabu, 20 Mei 2026): Eksekusi test domain lanjutan
 Status: [RENCANA]
-Milestone/Task: M8 QA dan BUGFIX / Testing dan Triage
+Milestone/Group: M12: QA EXECUTION (W17)
+Task Referensi Berdua: QA Tahap 2 & Triage Bug
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Eksekusi test verify reward mitra.
@@ -1734,12 +1842,13 @@ Lampiran Ikram (Bukti Screenshot):
 
 ### Day 84 (Kamis, 21 Mei 2026): Triage defect
 Status: [RENCANA]
-Milestone/Task: M8 QA dan BUGFIX / Testing dan Triage
+Milestone/Group: M12: QA EXECUTION (W17)
+Task Referensi Berdua: QA Tahap 2 & Triage Bug
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Triage defect berdasarkan severity dan owner.
 Uraian Kegiatan (Logbook):
-"Hari ini saya mengerjakan Triage defect berdasarkan severity dan owner pada konteks 'Triage defect'. Pekerjaan saya jalankan bertahap dari perapihan kebutuhan, eksekusi inti, sampai pengecekan hasil agar sesuai milestone M8 QA dan BUGFIX / Testing dan Triage. Setelah selesai, saya pastikan 'Bugboard terurut' sudah siap dipakai tanpa nunggu klarifikasi tambahan."
+"Hari ini saya mengerjakan Triage defect berdasarkan severity dan owner pada konteks 'Triage defect'. Pekerjaan saya jalankan bertahap dari perapihan kebutuhan, eksekusi inti, sampai pengecekan hasil agar sesuai milestone M12: QA EXECUTION (W17). Setelah selesai, saya pastikan 'Bugboard terurut' sudah siap dipakai tanpa nunggu klarifikasi tambahan."
 Output Farchan:
 - Artefak UX+Backend harian selesai: Triage defect berdasarkan severity dan owner.
 - Outcome harian terukur: Bugboard terurut.
@@ -1751,7 +1860,7 @@ Lampiran Farchan (Bukti Screenshot):
 #### Entri Ikram (UI+Frontend)
 Aktivitas: Reproduksi bug dan kumpulkan evidence FE.
 Uraian Kegiatan (Logbook):
-"Hari ini saya ngerjain Reproduksi bug dan kumpulkan evidence FE dalam konteks 'Triage defect'. Pengerjaan saya alirin dari setup komponen, sinkronisasi state, sampai cek akhir integrasi agar tetap sejalan dengan milestone M8 QA dan BUGFIX / Testing dan Triage. Hasil 'Bugboard terurut' saya pastikan bisa langsung dipakai tim tanpa nunggu penjelasan tambahan."
+"Hari ini saya ngerjain Reproduksi bug dan kumpulkan evidence FE dalam konteks 'Triage defect'. Pengerjaan saya alirin dari setup komponen, sinkronisasi state, sampai cek akhir integrasi agar tetap sejalan dengan milestone M12: QA EXECUTION (W17). Hasil 'Bugboard terurut' saya pastikan bisa langsung dipakai tim tanpa nunggu penjelasan tambahan."
 Output Ikram:
 - Artefak UI+Frontend harian selesai: Reproduksi bug dan kumpulkan evidence FE.
 - Outcome harian terukur: Bugboard terurut.
@@ -1762,7 +1871,8 @@ Lampiran Ikram (Bukti Screenshot):
 
 ### Day 85 (Jumat, 22 Mei 2026): Patch plan W18
 Status: [RENCANA]
-Milestone/Task: M8 QA dan BUGFIX / Testing dan Triage
+Milestone/Group: M12: QA EXECUTION (W17)
+Task Referensi Berdua: QA Tahap 2 & Triage Bug
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Susun patch plan untuk W18.
@@ -1791,12 +1901,13 @@ Lampiran Ikram (Bukti Screenshot):
 ## PEKAN 18 (W18): Bug Fixing
 
 Status Pekan: Proyeksi
-Milestone Aktif: M8 QA dan BUGFIX
-Task Utama: Patch dan Stabilization
+Milestone Aktif: M13: BUG FIXING (W18)
+Task Utama: Berdua - Fix High/Critical Bugs
 
 ### Day 86 (Senin, 25 Mei 2026): Fix high severity
 Status: [RENCANA]
-Milestone/Task: M8 QA dan BUGFIX / Patch dan Stabilization
+Milestone/Group: M13: BUG FIXING (W18)
+Task Referensi Berdua: Fix High/Critical Bugs
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Fix bug high severity backend.
@@ -1824,7 +1935,8 @@ Lampiran Ikram (Bukti Screenshot):
 
 ### Day 87 (Selasa, 26 Mei 2026): Fix medium batch 1
 Status: [RENCANA]
-Milestone/Task: M8 QA dan BUGFIX / Patch dan Stabilization
+Milestone/Group: M13: BUG FIXING (W18)
+Task Referensi Berdua: Fix High/Critical Bugs
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Fix bug medium batch 1 backend.
@@ -1852,7 +1964,8 @@ Lampiran Ikram (Bukti Screenshot):
 
 ### Day 88 (Rabu, 27 Mei 2026): Retest patch
 Status: [RENCANA]
-Milestone/Task: M8 QA dan BUGFIX / Patch dan Stabilization
+Milestone/Group: M13: BUG FIXING (W18)
+Task Referensi Berdua: Fix Medium & Retest Stabil
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Retest patch backend.
@@ -1880,7 +1993,8 @@ Lampiran Ikram (Bukti Screenshot):
 
 ### Day 89 (Kamis, 28 Mei 2026): Fix critical path sisa
 Status: [RENCANA]
-Milestone/Task: M8 QA dan BUGFIX / Patch dan Stabilization
+Milestone/Group: M13: BUG FIXING (W18)
+Task Referensi Berdua: Fix Medium & Retest Stabil
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Fix sisa bug critical path backend.
@@ -1908,7 +2022,8 @@ Lampiran Ikram (Bukti Screenshot):
 
 ### Day 90 (Jumat, 29 Mei 2026): Stabilization build
 Status: [RENCANA]
-Milestone/Task: M8 QA dan BUGFIX / Patch dan Stabilization
+Milestone/Group: M13: BUG FIXING (W18)
+Task Referensi Berdua: Fix Medium & Retest Stabil
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Susun stabilization build backend.
@@ -1937,12 +2052,14 @@ Lampiran Ikram (Bukti Screenshot):
 ## PEKAN 19 (W19): Dokumen dan Pitch
 
 Status Pekan: Proyeksi
-Milestone Aktif: M9 FINAL
-Task Utama: Finalisasi Dokumen Sidang
+Milestone Aktif: M14: DOCS & PITCH (W19)
+Task Utama: Farchan - Update Bab KP & Bukti Teknis | Ikram - Capture UI & Rapikan Aset FE
 
 ### Day 91 (Senin, 1 Jun 2026): Update dokumen final
 Status: [RENCANA]
-Milestone/Task: M9 FINAL / Finalisasi Dokumen Sidang
+Milestone/Group: M14: DOCS & PITCH (W19)
+Task Referensi Farchan: Update Bab KP & Bukti Teknis
+Task Referensi Ikram: Capture UI & Rapikan Aset FE
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Update grand design final berbasis implementasi.
@@ -1970,7 +2087,9 @@ Lampiran Ikram (Bukti Screenshot):
 
 ### Day 92 (Selasa, 2 Jun 2026): Finalisasi logbook bukti
 Status: [RENCANA]
-Milestone/Task: M9 FINAL / Finalisasi Dokumen Sidang
+Milestone/Group: M14: DOCS & PITCH (W19)
+Task Referensi Farchan: Update Bab KP & Bukti Teknis
+Task Referensi Ikram: Capture UI & Rapikan Aset FE
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Finalisasi logbook dan bukti teknis.
@@ -1987,7 +2106,7 @@ Lampiran Farchan (Bukti Screenshot):
 #### Entri Ikram (UI+Frontend)
 Aktivitas: Rapikan file desain dan aset FE.
 Uraian Kegiatan (Logbook):
-"Hari ini saya ngerjain Rapikan file desain dan aset FE dalam konteks 'Finalisasi logbook bukti'. Pengerjaan saya alirin dari setup komponen, sinkronisasi state, sampai cek akhir integrasi agar tetap sejalan dengan milestone M9 FINAL / Finalisasi Dokumen Sidang. Hasil 'Arsip bukti siap' saya pastikan bisa langsung dipakai tim tanpa nunggu penjelasan tambahan."
+"Hari ini saya ngerjain Rapikan file desain dan aset FE dalam konteks 'Finalisasi logbook bukti'. Pengerjaan saya alirin dari setup komponen, sinkronisasi state, sampai cek akhir integrasi agar tetap sejalan dengan milestone M14: DOCS & PITCH (W19). Hasil 'Arsip bukti siap' saya pastikan bisa langsung dipakai tim tanpa nunggu penjelasan tambahan."
 Output Ikram:
 - Artefak UI+Frontend harian selesai: Rapikan file desain dan aset FE.
 - Outcome harian terukur: Arsip bukti siap.
@@ -1998,7 +2117,9 @@ Lampiran Ikram (Bukti Screenshot):
 
 ### Day 93 (Rabu, 3 Jun 2026): Finalisasi narasi presentasi
 Status: [RENCANA]
-Milestone/Task: M9 FINAL / Finalisasi Dokumen Sidang
+Milestone/Group: M14: DOCS & PITCH (W19)
+Task Referensi Farchan: Script Pitch & Rehearsal QnA
+Task Referensi Ikram: Deck PPT & Video Demo Flow
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Finalisasi narasi presentasi dan script.
@@ -2015,7 +2136,7 @@ Lampiran Farchan (Bukti Screenshot):
 #### Entri Ikram (UI+Frontend)
 Aktivitas: Siapkan visual slide dan video demo FE.
 Uraian Kegiatan (Logbook):
-"Hari ini saya ngerjain Siapkan visual slide dan video demo FE dalam konteks 'Finalisasi narasi presentasi'. Pengerjaan saya alirin dari setup komponen, sinkronisasi state, sampai cek akhir integrasi agar tetap sejalan dengan milestone M9 FINAL / Finalisasi Dokumen Sidang. Hasil 'Draft deck final' saya pastikan bisa langsung dipakai tim tanpa nunggu penjelasan tambahan."
+"Hari ini saya ngerjain Siapkan visual slide dan video demo FE dalam konteks 'Finalisasi narasi presentasi'. Pengerjaan saya alirin dari setup komponen, sinkronisasi state, sampai cek akhir integrasi agar tetap sejalan dengan milestone M14: DOCS & PITCH (W19). Hasil 'Draft deck final' saya pastikan bisa langsung dipakai tim tanpa nunggu penjelasan tambahan."
 Output Ikram:
 - Artefak UI+Frontend harian selesai: Siapkan visual slide dan video demo FE.
 - Outcome harian terukur: Draft deck final.
@@ -2026,7 +2147,9 @@ Lampiran Ikram (Bukti Screenshot):
 
 ### Day 94 (Kamis, 4 Jun 2026): Rehearsal presentasi
 Status: [RENCANA]
-Milestone/Task: M9 FINAL / Finalisasi Dokumen Sidang
+Milestone/Group: M14: DOCS & PITCH (W19)
+Task Referensi Farchan: Script Pitch & Rehearsal QnA
+Task Referensi Ikram: Deck PPT & Video Demo Flow
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Rehearsal presentasi dan QnA bank.
@@ -2054,7 +2177,9 @@ Lampiran Ikram (Bukti Screenshot):
 
 ### Day 95 (Jumat, 5 Jun 2026): Revisi paket sidang
 Status: [RENCANA]
-Milestone/Task: M9 FINAL / Finalisasi Dokumen Sidang
+Milestone/Group: M14: DOCS & PITCH (W19)
+Task Referensi Farchan: Script Pitch & Rehearsal QnA
+Task Referensi Ikram: Deck PPT & Video Demo Flow
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Revisi final dokumen KP.
@@ -2083,12 +2208,13 @@ Lampiran Ikram (Bukti Screenshot):
 ## PEKAN 20 (W20): UAT Final dan Closing
 
 Status Pekan: Proyeksi
-Milestone Aktif: M9 FINAL
-Task Utama: Closing dan Handover
+Milestone Aktif: M15: CLOSING (W20)
+Task Utama: Berdua - UAT Mentor & Minor Patch
 
 ### Day 96 (Senin, 8 Jun 2026): UAT final mentor
 Status: [RENCANA]
-Milestone/Task: M9 FINAL / Closing dan Handover
+Milestone/Group: M15: CLOSING (W20)
+Task Referensi Berdua: UAT Mentor & Minor Patch
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: UAT final dengan mentor dan checklist.
@@ -2116,7 +2242,8 @@ Lampiran Ikram (Bukti Screenshot):
 
 ### Day 97 (Selasa, 9 Jun 2026): Patch minor final
 Status: [RENCANA]
-Milestone/Task: M9 FINAL / Closing dan Handover
+Milestone/Group: M15: CLOSING (W20)
+Task Referensi Berdua: UAT Mentor & Minor Patch
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Implement perubahan minor final backend.
@@ -2144,7 +2271,8 @@ Lampiran Ikram (Bukti Screenshot):
 
 ### Day 98 (Rabu, 10 Jun 2026): Readiness final
 Status: [RENCANA]
-Milestone/Task: M9 FINAL / Closing dan Handover
+Milestone/Group: M15: CLOSING (W20)
+Task Referensi Berdua: Handover & Submit Laporan
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Final readiness note operasional.
@@ -2172,7 +2300,8 @@ Lampiran Ikram (Bukti Screenshot):
 
 ### Day 99 (Kamis, 11 Jun 2026): Closing report dan handover
 Status: [RENCANA]
-Milestone/Task: M9 FINAL / Closing dan Handover
+Milestone/Group: M15: CLOSING (W20)
+Task Referensi Berdua: Handover & Submit Laporan
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Susun closing report dan handover teknis.
@@ -2189,7 +2318,7 @@ Lampiran Farchan (Bukti Screenshot):
 #### Entri Ikram (UI+Frontend)
 Aktivitas: Arsip source UI/FE dan dokumentasi.
 Uraian Kegiatan (Logbook):
-"Hari ini saya ngerjain Arsip source UI/FE dan dokumentasi dalam konteks 'Closing report dan handover'. Pengerjaan saya alirin dari setup komponen, sinkronisasi state, sampai cek akhir integrasi agar tetap sejalan dengan milestone M9 FINAL / Closing dan Handover. Hasil 'Closing package' saya pastikan bisa langsung dipakai tim tanpa nunggu penjelasan tambahan."
+"Hari ini saya ngerjain Arsip source UI/FE dan dokumentasi dalam konteks 'Closing report dan handover'. Pengerjaan saya alirin dari setup komponen, sinkronisasi state, sampai cek akhir integrasi agar tetap sejalan dengan milestone M15: CLOSING (W20). Hasil 'Closing package' saya pastikan bisa langsung dipakai tim tanpa nunggu penjelasan tambahan."
 Output Ikram:
 - Artefak UI+Frontend harian selesai: Arsip source UI/FE dan dokumentasi.
 - Outcome harian terukur: Closing package.
@@ -2200,12 +2329,13 @@ Lampiran Ikram (Bukti Screenshot):
 
 ### Day 100 (Jumat, 12 Jun 2026): Presentasi akhir dan retrospektif
 Status: [RENCANA]
-Milestone/Task: M9 FINAL / Closing dan Handover
+Milestone/Group: M15: CLOSING (W20)
+Task Referensi Berdua: Handover & Submit Laporan
 
 #### Entri Farchan (UX+Backend)
 Aktivitas: Presentasi akhir dan retrospektif proyek.
 Uraian Kegiatan (Logbook):
-"Hari ini saya mengerjakan Presentasi akhir dan retrospektif proyek pada konteks 'Presentasi akhir dan retrospektif'. Pekerjaan saya jalankan bertahap dari perapihan kebutuhan, eksekusi inti, sampai pengecekan hasil agar sesuai milestone M9 FINAL / Closing dan Handover. Setelah selesai, saya pastikan 'Proyek ditutup' sudah siap dipakai tanpa nunggu klarifikasi tambahan."
+"Hari ini saya mengerjakan Presentasi akhir dan retrospektif proyek pada konteks 'Presentasi akhir dan retrospektif'. Pekerjaan saya jalankan bertahap dari perapihan kebutuhan, eksekusi inti, sampai pengecekan hasil agar sesuai milestone M15: CLOSING (W20). Setelah selesai, saya pastikan 'Proyek ditutup' sudah siap dipakai tanpa nunggu klarifikasi tambahan."
 Output Farchan:
 - Artefak UX+Backend harian selesai: Presentasi akhir dan retrospektif proyek.
 - Outcome harian terukur: Proyek ditutup.
@@ -2217,7 +2347,7 @@ Lampiran Farchan (Bukti Screenshot):
 #### Entri Ikram (UI+Frontend)
 Aktivitas: Support demo akhir dan sign-off.
 Uraian Kegiatan (Logbook):
-"Hari ini saya ngerjain Support demo akhir dan sign-off dalam konteks 'Presentasi akhir dan retrospektif'. Pengerjaan saya alirin dari setup komponen, sinkronisasi state, sampai cek akhir integrasi agar tetap sejalan dengan milestone M9 FINAL / Closing dan Handover. Hasil 'Proyek ditutup' saya pastikan bisa langsung dipakai tim tanpa nunggu penjelasan tambahan."
+"Hari ini saya ngerjain Support demo akhir dan sign-off dalam konteks 'Presentasi akhir dan retrospektif'. Pengerjaan saya alirin dari setup komponen, sinkronisasi state, sampai cek akhir integrasi agar tetap sejalan dengan milestone M15: CLOSING (W20). Hasil 'Proyek ditutup' saya pastikan bisa langsung dipakai tim tanpa nunggu penjelasan tambahan."
 Output Ikram:
 - Artefak UI+Frontend harian selesai: Support demo akhir dan sign-off.
 - Outcome harian terukur: Proyek ditutup.

@@ -4,6 +4,7 @@
 ## Referensi Plan (2 Skenario)
 - Plan 20 pekan (full Day 1-100): `docs/logbook/PROJECT_MANAGEMENT_20_WEEKS_SIMREKAP.md`
 - Plan 15 pekan (sisa Day 26-100): `docs/logbook/PROJECT_MANAGEMENT_15_WEEKS_SIMREKAP.md`
+- Tabel milestone rinci W06-W20 (M1-M15): `docs/logbook/MILESTONE_TABLE_W06_W20_NO_SKIP.csv`
 - Logbook harian W06-W20 (dua orang): `docs/logbook/LOGBOOK_HARIAN_W06_W20_DUAL_ROLE.md`
 - Logbook utama: `docs/logbook/logbook.md`
 
