@@ -16,4 +16,36 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  build: {
+    // Code splitting for better performance
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Split vendor libraries into separate chunk
+          'vendor-core': ['react', 'react-dom'],
+          'vendor-ui': [
+            '@mui/material',
+            '@mui/icons-material',
+            '@emotion/react',
+            '@emotion/styled',
+          ],
+          'vendor-radix': [
+            '@radix-ui/react-dialog',
+            '@radix-ui/react-dropdown-menu',
+            '@radix-ui/react-select',
+            '@radix-ui/react-tabs',
+            '@radix-ui/react-tooltip',
+          ],
+          'vendor-utils': [
+            'date-fns',
+            'recharts',
+            'motion',
+            'react-hook-form',
+          ],
+        },
+      },
+    },
+    // Increase chunk size warning limit for this app
+    chunkSizeWarningLimit: 800,
+  },
 })
