@@ -1,103 +1,108 @@
-# 🚀 QUICK START GUIDE - SIMRP
+# 🚀 QUICK START - Setup SIMRP Dalam 5 Menit
 
-## Get the system running in 5 minutes!
-
----
-
-## ⚡ Quick Setup
-
-### 1. Prerequisites Check
-```bash
-node --version    # Should be 18+
-npm --version     # Should be 8+
-```
-
-### 2. Install Dependencies
-```bash
-npm install
-```
-
-### 3. Start Local Demo (Frontend + Local API SQLite)
-```bash
-npm run dev
-```
-
-`npm run dev` sekarang otomatis menjalankan:
-- Vite frontend di `http://localhost:5173`
-- Local API di `http://127.0.0.1:8000/make-server-32aa5c5c`
-
-### 4. Open in Browser
-```
-http://localhost:5173
-```
+> **Panduan singkat untuk kontributor baru. Kalau masih bingung, baca README.md utama di root folder.**
 
 ---
 
-## 🎯 Quick Test Scenarios
+## ⚡ 3 STEP SEDERHANA
 
-### Scenario 1: Test Admin Access (30 seconds)
-1. Click **"Masuk"** button
-2. Select **"Admin"** tab
-3. Login with:
-   - Username: `admin`
-   - Password: `admin`
-4. ✅ You're in Admin Dashboard!
+### 1️⃣ Cek Prerequisites (1 menit)
 
-### Scenario 2: Test User Registration (1 minute)
-1. Click **"Daftar"** button
-2. Fill in:
-   - Name: `Test User`
-   - Email: `test@example.com`
-   - Password: `password123`
-   - Confirm Password: `password123`
-   - Kode Pos: `60111`
-3. Watch it auto-fill:
-   - Kecamatan: `Sukolilo`
-   - Kelurahan: `Keputih`
-4. Click **"Daftar Sekarang"**
-5. ✅ Auto-logged in to User Dashboard!
+Buka terminal, ketik:
+```bash
+node --version      # Harus v18+ (contoh: v20.10.0)
+npm --version       # Harus 8+ (contoh: 9.6.4)
+python --version    # Harus 3.10+ (contoh: 3.11.8)
+```
 
-### Scenario 3: Test Event Browsing (30 seconds)
-1. Login as user (from Scenario 2)
-2. Click **"Event"** tab in bottom nav
-3. See 8 pre-loaded events
-4. Click any event
-5. Click **"Gabung Event"**
-6. ✅ Success toast appears!
-
-### Scenario 4: Test Reporting Wizard (1 minute)
-1. Login as user
-2. Click **"Buat Laporan"** button
-3. Click camera area → Select any image
-4. Enter participants: `25`
-5. Click **"Lanjut ke Step 2"**
-6. Select outcome tags (any)
-7. Click **"Kirim Laporan"**
-8. ✅ Report submitted!
-
-### Scenario 5: Test Offline Mode (1 minute)
-1. Open DevTools (F12)
-2. Go to Network tab
-3. Select "Offline" from throttling dropdown
-4. Try creating a report
-5. Notice WiFi icon changes to WifiOff
-6. Submit report
-7. ✅ Saved as draft in localStorage!
+**Kalau ada yang nggak keluar?** Install dulu:
+- **Node.js**: https://nodejs.org (pilih LTS) → Restart komputer
+- **Python**: https://www.python.org → Centang "Add Python to PATH" → Restart komputer
 
 ---
 
-## 🔑 Demo Credentials
+### 2️⃣ Download & Install (2 menit)
 
-### Admin Access
-```
-URL: /login → Admin tab
-Username: admin
-Password: admin
+```bash
+# Extract ZIP atau clone repo ke folder
+
+cd Figmasimrp                  # Masuk folder
+npm install                    # Download semua library (tunggu 2-5 menit)
 ```
 
-### Test User (Create via Registration)
+✅ Kalau selesai, muncul: `added XXX packages`
+
+---
+
+### 3️⃣ Jalankan & Buka Browser (2 menit)
+
+```bash
+npm run dev        # Jalankan project
 ```
-URL: /register
+
+✅ Tunggu sampai terlihat:
+```
+VITE v6.3.5  ready in XXX ms
+
+➜  Local:   http://localhost:5173/
+```
+
+**JANGAN TUTUP TERMINAL INI** - biarkan terbuka selamanya.
+
+Buka browser ke: `http://localhost:5173`
+
+🎉 **SELESAI!** Aplikasi sudah jalan.
+
+---
+
+## 🎮 CEPAT TEST
+
+Login dengan akun demo siap pakai:
+
+| Role | Email | Password | Test Apa |
+|------|-------|----------|----------|
+| Relawan | `relawan.demo@simrp.app` | `password123` | Ikut event, lihat ranking |
+| Moderator | `moderator2.demo@simrp.app` | `password123` | Approve event, verify laporan |
+| Admin | Admin page: `/admin` → `admin` / `admin` | - | God mode, manage semua |
+
+---
+
+## 🛠️ COMMAND PENTING
+
+| Command | Apa |
+|---------|-----|
+| `npm run dev` | ✨ Jalankan selamanya (paling penting!) |
+| `npm run dev:web` | Frontend doang (jarang) |
+| `npm run api` | Backend doang (jarang) |
+| `npm run build` | Build untuk production (deploy) |
+
+---
+
+## ❓ ADA ERROR?
+
+1. **"command not found"** → Restart komputer
+2. **Terminal error saat `npm install`** → Ulangi, cek internet
+3. **Browser blank** → F12 → Console → baca error → screenshot di #dev-help
+4. **Database error** → Jalankan:
+   ```bash
+   rm -rf database/runtime
+   npm run dev
+   ```
+
+---
+
+## 📚 DOKUMENTASI LENGKAP
+
+**Baca README.md utama** (di root folder `Figmasimrp/`) untuk:
+- ✅ Setup detail
+- ✅ Semua demo account
+- ✅ Troubleshooting lengkap
+- ✅ Fitur-fitur penjelasan
+- ✅ How to contribute
+
+---
+
+**Happy coding! 🚀**
 Email: test@example.com
 Password: password123
 Kode Pos: 60111 (Keputih, Sukolilo)
