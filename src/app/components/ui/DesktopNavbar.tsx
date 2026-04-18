@@ -67,51 +67,50 @@ export function DesktopNavbar({
 
   return (
     <div className="fixed top-3 left-0 right-0 z-50">
-      <div className="mx-auto flex items-center gap-3 px-4">
+      <div className="mx-auto flex w-max justify-center items-center px-4">
         {/* Pill Nav */}
         <div
-          className={`flex items-center gap-1 rounded-full border bg-white/95 px-3 py-2 shadow-lg backdrop-blur ${
+          className={`flex items-center gap-2 rounded-full border bg-white/95 p-1.5 pr-2 shadow-lg backdrop-blur ${
             isScrolled ? 'shadow-xl' : ''
           } ${palette.border}`}
         >
-          {items.map((item) => {
-            const Icon = item.icon;
-            const isActive = activePage === item.key;
-            return (
-              <button
-                key={item.key}
-                onClick={() => onNavigate(item.key)}
-                className={`flex items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold transition ${
-                  isActive ? palette.active : palette.inactive
-                }`}
-              >
-                <Icon className="h-4 w-4" />
-                <span>{item.label}</span>
-              </button>
-            );
-          })}
-        </div>
+          <div className="flex items-center gap-1 pl-2">
+            {items.map((item) => {
+              const Icon = item.icon;
+              const isActive = activePage === item.key;
+              return (
+                <button
+                  key={item.key}
+                  onClick={() => onNavigate(item.key)}
+                  className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition ${
+                    isActive ? palette.active : palette.inactive
+                  }`}
+                >
+                  <Icon className="h-4 w-4 shrink-0" />
+                  <span>{item.label}</span>
+                </button>
+              );
+            })}
+          </div>
 
-        {/* Menu Button + Dropdown */}
-        <div className="relative">
-          <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className={`h-10 w-10 rounded-full text-white shadow-lg transition ${palette.menu} ${
-              isScrolled ? 'shadow-xl' : ''
-            }`}
-          >
-            {isMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
-          </button>
-
-          {/* Dropdown */}
-          {isMenuOpen && (
-            <motion.div
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.15 }}
-              className={`absolute right-0 mt-2 w-72 rounded-2xl border bg-white shadow-xl ${palette.border}`}
+          {/* Menu Button + Dropdown */}
+          <div className="relative flex items-center">
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className={`flex h-10 w-10 items-center justify-center rounded-full text-white shadow-sm transition ${palette.menu}`}
             >
+              {isMenuOpen ? <X className="h-4 w-4 shrink-0" /> : <Menu className="h-4 w-4 shrink-0" />}
+            </button>
+
+            {/* Dropdown */}
+            {isMenuOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.15 }}
+                className={`absolute right-0 top-full mt-3 w-72 origin-top-right rounded-2xl border bg-white shadow-xl ${palette.border}`}
+              >
               {/* User Header */}
               <div className="flex items-center gap-3 border-b border-gray-100 p-4">
                 <div
@@ -255,6 +254,7 @@ export function DesktopNavbar({
               </div>
             </motion.div>
           )}
+          </div>
         </div>
       </div>
     </div>

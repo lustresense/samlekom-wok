@@ -381,7 +381,7 @@ export function UserDashboard({
         {/* Profile Tab */}
         {activePage === 'profile' && (
           <div className="pt-2">
-             <UserProfile user={user} reports={reports} />
+             <UserProfile user={user} reports={reports} onLogout={onLogout} />
           </div>
         )}
         </>

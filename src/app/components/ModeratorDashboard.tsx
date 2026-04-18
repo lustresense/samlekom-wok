@@ -2,11 +2,12 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/app/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/components/ui/card';
 import { Badge } from '@/app/components/ui/badge';
-import { CheckCircle, XCircle, FileText, Clock, LayoutGrid, ShieldCheck, Lightbulb, BarChart3, Users, Handshake, Loader2 } from 'lucide-react';
+import { CheckCircle, XCircle, FileText, Clock, LayoutGrid, ShieldCheck, Lightbulb, BarChart3, Users, Handshake, Loader2, User as UserIcon } from 'lucide-react';
 import { apiGet, apiPost } from '@/lib/api';
 import { toast } from 'sonner';
 import { FloatingNavbar } from '@/app/components/ui/FloatingNavbar';
 import { Input } from '@/app/components/ui/input';
+import { UserProfile } from '@/app/components/UserProfile';
 
 interface ModeratorDashboardProps {
   user: any;
@@ -267,19 +268,22 @@ export function ModeratorDashboard({ user, authToken, onLogout, onNavigate, curr
             ? [
                 { key: "monitor", label: "Monitoring", icon: BarChart3 },
                 { key: "rekom", label: "Input", icon: Lightbulb },
-                { key: "overview", label: "Ringkas", icon: LayoutGrid }
+                { key: "overview", label: "Ringkas", icon: LayoutGrid },
+                { key: "profile", label: "Profil", icon: UserIcon }
               ]
             : moderatorTier === 2
             ? [
                 { key: "verify", label: "Verifikasi", icon: ShieldCheck },
                 { key: "events", label: "Kegiatan", icon: FileText },
                 { key: "collab", label: "Kolab", icon: Handshake },
-                { key: "overview", label: "Ringkas", icon: LayoutGrid }
+                { key: "overview", label: "Ringkas", icon: LayoutGrid },
+                { key: "profile", label: "Profil", icon: UserIcon }
               ]
             : [
                 { key: "aggregate", label: "Agregat", icon: BarChart3 },
                 { key: "insight", label: "Insight", icon: Lightbulb },
-                { key: "overview", label: "Ringkas", icon: LayoutGrid }
+                { key: "overview", label: "Ringkas", icon: LayoutGrid },
+                { key: "profile", label: "Profil", icon: UserIcon }
               ]
         }
       />
@@ -844,6 +848,12 @@ export function ModeratorDashboard({ user, authToken, onLogout, onNavigate, curr
               )}
             </CardContent>
           </Card>
+        )}
+        {/* Profile Tab */}
+        {activePage === 'profile' && (
+          <div className="pt-2">
+             <UserProfile user={user} reports={reports} onLogout={onLogout} moderatorTier={moderatorTier} />
+          </div>
         )}
       </div>
     </div>
