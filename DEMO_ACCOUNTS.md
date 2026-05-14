@@ -6,13 +6,13 @@
 
 ### Admin Login
 - **Username**: `admin` (halaman `/admin`)
-- **Development default**: `admin`
+- **Development default**: password dibuat otomatis ke `database/runtime/dev_credentials.txt`
 - **Production**: wajib set `SIMRP_ADMIN_LOGIN_USERNAME` dan `SIMRP_ADMIN_LOGIN_PASSWORD`
 - **Custom password (dev/prod)**: set `SIMRP_ADMIN_LOGIN_PASSWORD=YourPassword`
 
 ### User/Moderator Login
 - Semua akun non-admin login dari halaman `/login` (email + password)
-- Password demo default: `password123`
+- Password demo development dibuat otomatis ke `database/runtime/dev_credentials.txt`
 - Bisa diganti via `SIMRP_DEMO_PASSWORD`
 - Akun demo otomatis di-sync ke DB saat startup jika `SIMRP_ENABLE_DEMO_SEED=true`
 
@@ -22,15 +22,15 @@
 
 | Role | Tier/Mode | Nama | Username/Email | Password | Tujuan Demo |
 |---|---|---|---|---|---|
-| Admin | Super Admin | Administrator | `admin` (halaman `/admin`) | **Random** (lihat console) | Login admin, switch view, monitoring global |
-| Moderator | Tier 1 (ASN) | Pak Raka ASN | `moderator1.demo@simrp.app` | `password123` | Buat draft kegiatan |
-| Moderator | Tier 2 (Lurah) | Bu Sinta Lurah | `moderator2.demo@simrp.app` | `password123` | Approve draft skala kelurahan, verifikasi laporan |
-| Moderator | Tier 2 (Camat) | Pak Dimas Camat | `moderator2.camat@simrp.app` | `password123` | Approve draft skala kecamatan |
-| Moderator | Tier 3 | Pak Arif | `moderator3.demo@simrp.app` | `password123` | Monitoring agregat/insight |
-| User | Relawan | Andi Relawan | `relawan.demo@simrp.app` | `password123` | Join event, submit laporan |
-| User | Relawan | Nia Relawan | `relawan2.demo@simrp.app` | `password123` | Simulasi peserta tambahan |
-| User | Relawan | Budi Relawan | `relawan3.demo@simrp.app` | `password123` | Simulasi peserta tambahan |
-| User | KSH | Kak Esa | `ksh.demo@simrp.app` | `password123` | Tandai event selesai |
+| Admin | Super Admin | Administrator | `admin` (halaman `/admin`) | Generated local credential | Login admin, switch view, monitoring global |
+| Moderator | Tier 1 (ASN) | Pak Raka ASN | `moderator1.demo@simrp.app` | Generated local credential | Buat draft kegiatan |
+| Moderator | Tier 2 (Lurah) | Bu Sinta Lurah | `moderator2.demo@simrp.app` | Generated local credential | Approve draft skala kelurahan, verifikasi laporan |
+| Moderator | Tier 2 (Camat) | Pak Dimas Camat | `moderator2.camat@simrp.app` | Generated local credential | Approve draft skala kecamatan |
+| Moderator | Tier 3 | Pak Arif | `moderator3.demo@simrp.app` | Generated local credential | Monitoring agregat/insight |
+| User | Relawan | Andi Relawan | `relawan.demo@simrp.app` | Generated local credential | Join event, submit laporan |
+| User | Relawan | Nia Relawan | `relawan2.demo@simrp.app` | Generated local credential | Simulasi peserta tambahan |
+| User | Relawan | Budi Relawan | `relawan3.demo@simrp.app` | Generated local credential | Simulasi peserta tambahan |
+| User | KSH | Kak Esa | `ksh.demo@simrp.app` | Generated local credential | Tandai event selesai |
 
 ---
 
@@ -44,7 +44,7 @@ npm run dev
 ### 2. Catat Password Admin
 Default development:
 - Username: `admin`
-- Password: `admin`
+- Password: lihat `database/runtime/dev_credentials.txt`
 
 Jika ingin ubah:
 - set `SIMRP_ADMIN_LOGIN_USERNAME`
@@ -53,7 +53,7 @@ Jika ingin ubah:
 ### 3. Login Admin
 1. Buka `http://localhost:5173/admin`
 2. Username: `admin`
-3. Password: **dari console output**
+3. Password: **dari `database/runtime/dev_credentials.txt`**
 
 ---
 
@@ -75,29 +75,29 @@ Untuk demo dengan password tetap, gunakan environment variable:
 
 ### Windows (PowerShell):
 ```powershell
-$env:SIMRP_ADMIN_LOGIN_PASSWORD="DemoPassword123!"; npm run dev
+$env:SIMRP_ADMIN_LOGIN_PASSWORD="UseAUniqueStrongPasswordHere"; npm run dev
 ```
 
 ### Windows (CMD):
 ```cmd
-set SIMRP_ADMIN_LOGIN_PASSWORD=DemoPassword123! && npm run dev
+set SIMRP_ADMIN_LOGIN_PASSWORD=UseAUniqueStrongPasswordHere && npm run dev
 ```
 
 ### Linux/Mac:
 ```bash
-SIMRP_ADMIN_LOGIN_PASSWORD="DemoPassword123!" npm run dev
+SIMRP_ADMIN_LOGIN_PASSWORD="UseAUniqueStrongPasswordHere" npm run dev
 ```
 
 ### Permanent (.env.local):
 ```bash
 cp .env.example .env.local
 # Edit .env.local, set:
-SIMRP_ADMIN_LOGIN_PASSWORD=DemoPassword123!
+SIMRP_ADMIN_LOGIN_PASSWORD=UseAUniqueStrongPasswordHere
 ```
 
 ### Kontrol Demo Seed
 - `SIMRP_ENABLE_DEMO_SEED=true|false` (default: `true` di development, `false` di production)
-- `SIMRP_DEMO_PASSWORD=...` (default: `password123`)
+- `SIMRP_DEMO_PASSWORD=...` (jika kosong di development, dibuat otomatis ke `database/runtime/dev_credentials.txt`)
 
 ---
 

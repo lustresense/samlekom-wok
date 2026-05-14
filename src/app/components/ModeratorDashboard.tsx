@@ -184,6 +184,17 @@ export function ModeratorDashboard({ user, authToken, onLogout, onNavigate, curr
     }
   };
 
+  const handleEventPublish = async (eventId: string) => {
+    if (!requireToken()) return;
+    try {
+      await apiPost(`/events/${eventId}/publish`, {}, authToken);
+      toast.success('Event berhasil dipublish');
+      fetchEvents();
+    } catch (err: any) {
+      toast.error(err.message || 'Gagal publish event');
+    }
+  };
+
   const handleCollaborationApproval = async (requestId: string, approved: boolean) => {
     if (!requireToken()) return;
     try {
@@ -271,6 +282,7 @@ export function ModeratorDashboard({ user, authToken, onLogout, onNavigate, curr
   const pendingReports = reports.filter(r => r.status === 'pending');
   const verifiedReports = reports.filter(r => r.status === 'verified');
   const draftEvents = events.filter((e) => e.status === 'draft');
+  const approvedEvents = events.filter((e) => e.status === 'approved');
   const pendingCollaborationRequests = collaborationRequests.filter((item) => item.status === 'pending');
   const selectedKecamatan = geoOptions.find((k) => String(k.id) === eventForm.kecamatanId);
   const kelurahanOptions = selectedKecamatan?.kelurahan || [];
@@ -742,41 +754,72 @@ export function ModeratorDashboard({ user, authToken, onLogout, onNavigate, curr
               <CardDescription>Tier 2 memverifikasi kegiatan.</CardDescription>
             </CardHeader>
             <CardContent>
-              {draftEvents.length === 0 ? (
-                <div className="text-sm text-gray-500">Tidak ada kegiatan menunggu approval.</div>
+              {draftEvents.length === 0 && approvedEvents.length === 0 ? (
+                <div className="text-sm text-gray-500">Tidak ada kegiatan menunggu approval atau publish.</div>
               ) : (
-                <div className="space-y-3">
-                  {draftEvents.map((event) => (
-                    <div key={event.id} className="p-3 border rounded-lg bg-white">
-                      <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <div className="font-semibold">{event.title}</div>
-                          <div className="text-xs text-gray-500">
-                            {event.scopeType === 'kecamatan' ? 'Skala Kecamatan' : 'Skala Kelurahan'} - {event.kecamatan}{event.kelurahan ? ` / ${event.kelurahan}` : ''}
+                <div className="space-y-4">
+                  {draftEvents.length > 0 && (
+                    <div className="space-y-3">
+                      {draftEvents.map((event) => (
+                        <div key={event.id} className="p-3 border rounded-lg bg-white">
+                          <div className="flex items-start justify-between gap-4">
+                            <div>
+                              <div className="font-semibold">{event.title}</div>
+                              <div className="text-xs text-gray-500">
+                                {event.scopeType === 'kecamatan' ? 'Skala Kecamatan' : 'Skala Kelurahan'} - {event.kecamatan}{event.kelurahan ? ` / ${event.kelurahan}` : ''}
+                              </div>
+                              <div className="text-xs text-gray-500">{event.date}</div>
+                            </div>
+                            <Badge className="bg-yellow-400 text-black">Draft</Badge>
                           </div>
-                          <div className="text-xs text-gray-500">{event.date}</div>
+                          <div className="flex gap-2 mt-3">
+                            <Button
+                              onClick={() => handleEventApproval(event.id, true)}
+                              className="flex-1 bg-green-600 hover:bg-green-700"
+                            >
+                              <CheckCircle className="w-4 h-4 mr-2" />
+                              Approve
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              onClick={() => handleEventApproval(event.id, false)}
+                              className="flex-1"
+                            >
+                              <XCircle className="w-4 h-4 mr-2" />
+                              Reject
+                            </Button>
+                          </div>
                         </div>
-                        <Badge className="bg-yellow-400 text-black">Draft</Badge>
-                      </div>
-                      <div className="flex gap-2 mt-3">
-                        <Button
-                          onClick={() => handleEventApproval(event.id, true)}
-                          className="flex-1 bg-green-600 hover:bg-green-700"
-                        >
-                          <CheckCircle className="w-4 h-4 mr-2" />
-                          Approve
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          onClick={() => handleEventApproval(event.id, false)}
-                          className="flex-1"
-                        >
-                          <XCircle className="w-4 h-4 mr-2" />
-                          Reject
-                        </Button>
-                      </div>
+                      ))}
                     </div>
-                  ))}
+                  )}
+                  {approvedEvents.length > 0 && (
+                    <div className="space-y-3">
+                      {approvedEvents.map((event) => (
+                        <div key={event.id} className="p-3 border rounded-lg bg-white">
+                          <div className="flex items-start justify-between gap-4">
+                            <div>
+                              <div className="font-semibold">{event.title}</div>
+                              <div className="text-xs text-gray-500">
+                                {event.scopeType === 'kecamatan' ? 'Skala Kecamatan' : 'Skala Kelurahan'} - {event.kecamatan}{event.kelurahan ? ` / ${event.kelurahan}` : ''}
+                              </div>
+                              <div className="text-xs text-gray-500">{event.date}</div>
+                            </div>
+                            <Badge className="bg-emerald-500 text-white">Approved</Badge>
+                          </div>
+                          <div className="flex gap-2 mt-3">
+                            <Button
+                              onClick={() => handleEventPublish(event.id)}
+                              className="flex-1 bg-emerald-600 hover:bg-emerald-700"
+                            >
+                              <ShieldCheck className="w-4 h-4 mr-2" />
+                              Publish
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </CardContent>

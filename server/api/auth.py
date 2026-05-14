@@ -1,202 +1,164 @@
 """
-SIMRP Authentication Module
-Handles login, register, admin-login, logout, and session management.
+SIMRP Authentication Module.
+
+The active runtime still owns the database connection and shared helpers in
+server/main.py. These handlers receive those dependencies explicitly so auth
+routing can be moved out of main.py without changing security behavior.
 """
-import re
-from core import (
-    execute, commit, get_db,
-    hash_password, verify_password, generate_token,
-    EMAIL_PATTERN, SESSION_TTL_HOURS, RATE_LIMIT_AUTH_MAX,
-)
-from api.rate_limiter import check_rate_limit
-from datetime import datetime, timezone, timedelta
+import hmac
 import uuid
 
 
-def utc_now_iso():
-    """Get current UTC time in ISO format."""
-    return datetime.now(timezone.utc).isoformat()
+def _json(deps, handler, status, payload):
+  deps["write_json"](handler, status, payload)
+  return True
 
 
-def valid_email(email):
-    """Validate email format."""
-    return bool(re.match(EMAIL_PATTERN, str(email).strip()))
+def _auth_header(handler):
+  return handler.headers.get("Authorization")
 
 
-def valid_password(password):
-    """Validate password strength."""
-    s = str(password or "")
-    if len(s) < 8:
-        return False
-    has_alpha = any(c.isalpha() for c in s)
-    has_digit = any(c.isdigit() for c in s)
-    return has_alpha and has_digit
+def _bearer_token(handler):
+  auth = _auth_header(handler)
+  if not auth or not auth.startswith("Bearer "):
+    return None
+  return auth.split(" ", 1)[1].strip()
 
 
-def get_user_from_token(token):
-    """Get user data from session token."""
-    now = utc_now_iso()
-    row = execute(
-        "SELECT users.* FROM sessions JOIN users ON users.id = sessions.user_id WHERE sessions.token = ? AND sessions.expires_at > ?",
-        (token, now)
+def handle_get(handler, conn, path, deps):
+  """Handle GET /auth/* routes. Returns True when a route was handled."""
+  api_prefix = deps["API_PREFIX"]
+
+  if path == f"{api_prefix}/auth/me":
+    user = deps["user_from_token"](conn, _auth_header(handler))
+    if not user:
+      return _json(deps, handler, 401, {"error": "Unauthorized"})
+    return _json(deps, handler, 200, {"user": deps["get_user_payload"](conn, user)})
+
+  return False
+
+
+def handle_post(handler, conn, path, body, deps):
+  """Handle POST /auth/* routes. Returns True when a route was handled."""
+  api_prefix = deps["API_PREFIX"]
+  write_json = lambda target, status, payload: _json(deps, target, status, payload)
+  execute = deps["execute"]
+
+  if path == f"{api_prefix}/auth/signup":
+    if deps["rate_limited"](handler, "auth-signup", deps["RATE_LIMIT_AUTH_MAX"], deps["RATE_LIMIT_WINDOW_SECONDS"]):
+      return write_json(handler, 429, {"error": "Terlalu banyak percobaan signup, coba lagi nanti"})
+    if not body.get("email") or not body.get("password") or not body.get("name"):
+      return write_json(handler, 400, {"error": "Email, password, name wajib"})
+    email = str(body.get("email")).strip().lower()
+    if not deps["valid_email"](email):
+      return write_json(handler, 400, {"error": "Format email tidak valid"})
+    if not deps["valid_password"](body.get("password")):
+      return write_json(handler, 400, {"error": "Password minimal 8 karakter dan kombinasi huruf-angka"})
+    name = deps["bounded_text"](body.get("name"), 120)
+    nik = deps["bounded_text"](body.get("nik", ""), 32)
+    rw = deps["bounded_text"](body.get("rw", ""), 16)
+    if conn.execute("SELECT id FROM users WHERE email = ?", (email,)).fetchone():
+      return write_json(handler, 400, {"error": "Email sudah terdaftar"})
+    kel_name = deps["bounded_text"](body.get("kelurahan"), 120)
+    kel = conn.execute(
+      """
+      SELECT kelurahan.id AS id, kecamatan.id AS kec_id
+      FROM kelurahan JOIN kecamatan ON kecamatan.id = kelurahan.kecamatan_id
+      WHERE kelurahan.name = ? LIMIT 1
+      """,
+      (kel_name,),
     ).fetchone()
-    return row
+    if not kel:
+      return write_json(handler, 400, {"error": "Kelurahan tidak ditemukan"})
+    user_id = str(uuid.uuid4())
+    now = deps["utc_now_iso"]()
+    execute(
+      conn,
+      """
+      INSERT INTO users(
+        id, name, email, password_hash, nik, rw, role_code, is_ksh, moderator_tier, email_verified,
+        kelurahan_id, kecamatan_id, points, badges_json, created_at, updated_at
+      )
+      VALUES(?, ?, ?, ?, ?, ?, 'user', 0, NULL, 1, ?, ?, 0, '[]', ?, ?)
+      """,
+      (
+        user_id,
+        name,
+        email,
+        deps["hash_password"](body.get("password")),
+        nik,
+        rw,
+        kel["id"],
+        kel["kec_id"],
+        now,
+        now,
+      ),
+    )
+    user = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
+    token = deps["create_session"](conn, user_id)
+    return write_json(handler, 200, {"success": True, "token": token, "user": deps["get_user_payload"](conn, user)})
 
-
-def create_session(user_id, ttl_hours=SESSION_TTL_HOURS):
-    """Create a new session for user."""
-    token = generate_token()
-    now = utc_now_iso()
-    expires = (datetime.now(timezone.utc) + timedelta(hours=ttl_hours)).isoformat()
-    execute("INSERT INTO sessions(token, user_id, expires_at, created_at) VALUES(?, ?, ?, ?)", 
-            (token, user_id, expires, now))
-    commit()
-    return token
-
-
-def get_user_payload(user):
-    """Convert user database row to API payload."""
-    kel = execute(
-        "SELECT kelurahan.name AS kel_name, kecamatan.name AS kec_name FROM kelurahan JOIN kecamatan ON kecamatan.id = kelurahan.kecamatan_id WHERE kelurahan.id = ?",
-        (user["kelurahan_id"],)
-    ).fetchone() if user["kelurahan_id"] else None
-    
-    total_xp = execute("SELECT total_xp FROM xp_kelurahan WHERE kelurahan_id = ?", 
-                       (user["kelurahan_id"],)).fetchone() if user["kelurahan_id"] else None
-    volunteers = execute("SELECT COUNT(*) AS c FROM users WHERE kelurahan_id = ? AND role_code IN ('user', 'ksh')", 
-                         (user["kelurahan_id"],)).fetchone()["c"] if user["kelurahan_id"] else 0
-    
-    import json
-    return {
-        "id": user["id"],
-        "name": user["name"],
-        "email": user["email"],
-        "role": "admin" if user["role_code"] == "admin" else ("moderator" if user["role_code"].startswith("moderator_t") else "user"),
-        "roleCode": user["role_code"],
-        "isKsh": bool(user["is_ksh"]),
-        "moderatorTier": user["moderator_tier"],
-        "tier2Badge": user["tier2_badge"],
-        "kelurahan": kel["kel_name"] if kel else None,
-        "kecamatan": kel["kec_name"] if kel else None,
-        "kampungId": user["kelurahan_id"],
-        "kampung": {
-            "id": user["kelurahan_id"],
-            "name": kel["kel_name"],
-            "kecamatan": kel["kec_name"],
-            "xp": int(total_xp["total_xp"]) if total_xp else 0,
-            "volunteers": volunteers
-        } if kel else None,
-        "points": int(user["points"]),
-        "badges": json.loads(user["badges_json"] or "[]"),
-        "hasPendingReport": False,
-    }
-
-
-def handle_login(handler, body, client_ip):
-    """Handle user login endpoint."""
-    if check_rate_limit("auth-login", client_ip, RATE_LIMIT_AUTH_MAX):
-        return handler.send_json(429, {"error": "Terlalu banyak percobaan login"})
-    
+  if path == f"{api_prefix}/auth/login":
+    if deps["rate_limited"](handler, "auth-login", deps["RATE_LIMIT_AUTH_MAX"], deps["RATE_LIMIT_WINDOW_SECONDS"]):
+      return write_json(handler, 429, {"error": "Terlalu banyak percobaan login, coba lagi nanti"})
     email = str(body.get("email", "")).strip().lower()
+    if not deps["valid_email"](email):
+      return write_json(handler, 400, {"error": "Format email tidak valid"})
     password = str(body.get("password", ""))
-    
-    if not valid_email(email):
-        return handler.send_json(400, {"error": "Format email tidak valid"})
-    
-    user = execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
-    if not user or not verify_password(password, user["password_hash"]):
-        return handler.send_json(401, {"error": "Email/password salah"})
-    
-    token = create_session(user["id"])
-    return handler.send_json(200, {"success": True, "token": token, "user": get_user_payload(user)})
+    user = conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
+    if not user or not deps["verify_password"](password, user["password_hash"]):
+      return write_json(handler, 401, {"error": "Email/password salah"})
+    token = deps["create_session"](conn, user["id"])
+    return write_json(handler, 200, {"success": True, "token": token, "user": deps["get_user_payload"](conn, user)})
 
-
-def handle_admin_login(handler, body, client_ip):
-    """Handle admin login endpoint."""
-    if check_rate_limit("auth-admin-login", client_ip, RATE_LIMIT_AUTH_MAX):
-        return handler.send_json(429, {"error": "Terlalu banyak percobaan login admin"})
-    
+  if path == f"{api_prefix}/auth/admin-login":
+    if deps["rate_limited"](handler, "auth-admin-login", deps["RATE_LIMIT_AUTH_MAX"], deps["RATE_LIMIT_WINDOW_SECONDS"]):
+      return write_json(handler, 429, {"error": "Terlalu banyak percobaan login admin, coba lagi nanti"})
+    if not deps["ADMIN_LOGIN_USERNAME"] or not deps["ADMIN_LOGIN_PASSWORD"]:
+      return write_json(handler, 403, {"error": "Admin login tidak dikonfigurasi"})
     username = str(body.get("username", "")).strip()
     password = str(body.get("password", ""))
-    
-    admin = execute("SELECT * FROM users WHERE role_code = 'admin' LIMIT 1").fetchone()
-    if not admin or not verify_password(password, admin["password_hash"]):
-        return handler.send_json(401, {"error": "Invalid credentials"})
-    
-    token = create_session(admin["id"])
-    return handler.send_json(200, {"success": True, "token": token, "user": get_user_payload(admin)})
+    expected_username = deps["ADMIN_LOGIN_USERNAME"]
+    expected_password = deps["ADMIN_LOGIN_PASSWORD"]
+    valid_user = hmac.compare_digest(username, expected_username)
+    valid_pass = hmac.compare_digest(password, expected_password)
+    if not valid_user or not valid_pass:
+      return write_json(handler, 401, {"error": "Invalid credentials"})
+    admin = conn.execute("SELECT * FROM users WHERE role_code = 'admin' LIMIT 1").fetchone()
+    if not admin:
+      return write_json(handler, 500, {"error": "Akun admin tidak ditemukan"})
+    token = deps["create_session"](conn, admin["id"])
+    return write_json(handler, 200, {"success": True, "token": token, "user": deps["get_user_payload"](conn, admin)})
+
+  if path == f"{api_prefix}/auth/logout":
+    token = _bearer_token(handler)
+    if not token:
+      return write_json(handler, 401, {"error": "Unauthorized"})
+    execute(conn, "DELETE FROM sessions WHERE token = ?", (token,))
+    return write_json(handler, 200, {"success": True})
+
+  return False
 
 
-def handle_signup(handler, body, client_ip):
-    """Handle user registration endpoint."""
-    if check_rate_limit("auth-signup", client_ip, RATE_LIMIT_AUTH_MAX):
-        return handler.send_json(429, {"error": "Terlalu banyak percobaan signup"})
-    
-    if not all([body.get("email"), body.get("password"), body.get("name")]):
-        return handler.send_json(400, {"error": "Email, password, name wajib"})
-    
-    email = str(body.get("email")).strip().lower()
-    password = body.get("password")
-    name = str(body.get("name")).strip()[:120]
-    
-    if not valid_email(email):
-        return handler.send_json(400, {"error": "Format email tidak valid"})
-    
-    if not valid_password(password):
-        return handler.send_json(400, {"error": "Password minimal 8 karakter dan kombinasi huruf-angka"})
-    
-    if execute("SELECT id FROM users WHERE email = ?", (email,)).fetchone():
-        return handler.send_json(400, {"error": "Email sudah terdaftar"})
-    
-    kelurahan_name = str(body.get("kelurahan", "")).strip()
-    kel = execute(
-        "SELECT kelurahan.id AS id, kecamatan.id AS kec_id FROM kelurahan JOIN kecamatan ON kecamatan.id = kelurahan.kecamatan_id WHERE kelurahan.name = ? LIMIT 1",
-        (kelurahan_name,)
-    ).fetchone()
-    
-    if not kel:
-        return handler.send_json(400, {"error": "Kelurahan tidak ditemukan"})
-    
-    user_id = str(uuid.uuid4())
-    now = utc_now_iso()
-    
-    execute(
-        """INSERT INTO users(id, name, email, password_hash, role_code, is_ksh, email_verified,
-           kelurahan_id, kecamatan_id, points, badges_json, created_at, updated_at)
-           VALUES(?, ?, ?, ?, 'user', 0, 1, ?, ?, 0, '[]', ?, ?)""",
-        (user_id, name, email, hash_password(password), kel["id"], kel["kec_id"], now, now)
-    )
-    commit()
-    
-    token = create_session(user_id)
-    user = execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
-    return handler.send_json(200, {"success": True, "token": token, "user": get_user_payload(user)})
+def handle_delete(handler, conn, path, deps):
+  """Handle DELETE /auth/* routes. Returns True when a route was handled."""
+  api_prefix = deps["API_PREFIX"]
+
+  if path == f"{api_prefix}/auth/logout":
+    actor = deps["user_from_token"](conn, _auth_header(handler))
+    if not actor:
+      return _json(deps, handler, 401, {"error": "Unauthorized"})
+    token = _bearer_token(handler)
+    if not token:
+      return _json(deps, handler, 401, {"error": "Unauthorized"})
+    deps["execute"](conn, "DELETE FROM sessions WHERE token = ?", (token,))
+    return _json(deps, handler, 200, {"success": True})
+
+  return False
 
 
-def handle_logout(handler, token):
-    """Handle logout endpoint."""
-    execute("DELETE FROM sessions WHERE token = ?", (token,))
-    commit()
-    return handler.send_json(200, {"success": True})
-
-
-def handle_get_me(handler, token):
-    """Handle get current user endpoint."""
-    user = get_user_from_token(token)
-    if not user:
-        return handler.send_json(401, {"error": "Unauthorized"})
-    return handler.send_json(200, {"user": get_user_payload(user)})
-
-
-# Routes dictionary for main.py
 auth_routes = {
-    "POST": {
-        "/auth/login": handle_login,
-        "/auth/admin-login": handle_admin_login,
-        "/auth/signup": handle_signup,
-        "/auth/logout": lambda h, b, ip: handle_logout(h, h.headers.get("Authorization", "").replace("Bearer ", "")),
-    },
-    "GET": {
-        "/auth/me": lambda h, b, ip: handle_get_me(h, h.headers.get("Authorization", "").replace("Bearer ", "")),
-    },
+  "GET": ("/auth/me",),
+  "POST": ("/auth/signup", "/auth/login", "/auth/admin-login", "/auth/logout"),
+  "DELETE": ("/auth/logout",),
 }

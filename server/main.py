@@ -6,6 +6,7 @@ import uuid
 import hmac
 import secrets
 import hashlib
+import sys
 import threading
 import time
 from datetime import datetime, timedelta, timezone
@@ -19,6 +20,58 @@ DB_DIR = ROOT_DIR / "database"
 DB_PATH = Path(os.environ.get("SIMRP_DB_PATH", str(DB_DIR / "runtime" / "database.db")))
 GEO_PATH = ROOT_DIR / "src" / "data" / "geographicData.ts"
 API_PREFIX = "/make-server-32aa5c5c"
+DEV_CREDENTIALS_PATH = DB_PATH.parent / "dev_credentials.txt"
+_DEV_CREDENTIAL_NOTES = []
+
+
+def generate_runtime_secret():
+  return secrets.token_urlsafe(24)
+
+
+def record_dev_credential(label, identifier, env_name, secret):
+  if IS_PRODUCTION:
+    return
+  _DEV_CREDENTIAL_NOTES.append({
+    "label": label,
+    "identifier": identifier,
+    "env_name": env_name,
+    "secret": secret,
+  })
+
+
+def write_dev_credentials_file():
+  if IS_PRODUCTION or not _DEV_CREDENTIAL_NOTES:
+    return
+  lines = [
+    "SIMRP local development credentials",
+    "Generated because one or more demo credential environment variables were not set.",
+    "This file is under database/runtime/ and must stay ignored by Git.",
+    "",
+  ]
+  for item in _DEV_CREDENTIAL_NOTES:
+    lines.extend([
+      f"[{item['label']}]",
+      item["identifier"],
+      f"{item['env_name']}={item['secret']}",
+      "",
+    ])
+  DEV_CREDENTIALS_PATH.parent.mkdir(parents=True, exist_ok=True)
+  DEV_CREDENTIALS_PATH.write_text("\n".join(lines), encoding="utf-8")
+  print(f"[SECURITY] Local development credentials file: {DEV_CREDENTIALS_PATH}")
+
+if str(ROOT_DIR) not in sys.path:
+  sys.path.insert(0, str(ROOT_DIR))
+
+from api import auth as auth_api
+from api import events as events_api
+from api import reports as reports_api
+from api import collaboration as collaboration_api
+from api import geographic as geographic_api
+from api import admin as admin_api
+from api import notifications as notifications_api
+from api import certificates as certificates_api
+from api import rewards as rewards_api
+from api import users as users_api
 
 
 def env_flag(name, default=False):
@@ -39,7 +92,7 @@ RATE_LIMIT_MUTATION_MAX = int(os.environ.get("SIMRP_RATE_LIMIT_MUTATION_MAX", "1
 HOST = str(os.environ.get("SIMRP_HOST", "0.0.0.0" if IS_PRODUCTION else "127.0.0.1")).strip()
 PORT = int(os.environ.get("SIMRP_PORT", "8000"))
 ENABLE_DEMO_SEED = env_flag("SIMRP_ENABLE_DEMO_SEED", not IS_PRODUCTION)
-DEMO_PASSWORD = str(os.environ.get("SIMRP_DEMO_PASSWORD", "password123")).strip() or "password123"
+DEMO_PASSWORD = str(os.environ.get("SIMRP_DEMO_PASSWORD", "")).strip()
 
 DEV_ALLOWED_ORIGINS = {
   "http://localhost:5173",
@@ -50,6 +103,21 @@ ALLOWED_ORIGINS = {item.strip() for item in raw_allowed_origins.split(",") if it
 
 ADMIN_LOGIN_USERNAME = str(os.environ.get("SIMRP_ADMIN_LOGIN_USERNAME", "")).strip()
 ADMIN_LOGIN_PASSWORD = str(os.environ.get("SIMRP_ADMIN_LOGIN_PASSWORD", "")).strip()
+if not ADMIN_LOGIN_USERNAME and not IS_PRODUCTION:
+  ADMIN_LOGIN_USERNAME = "admin"
+if not ADMIN_LOGIN_PASSWORD and not IS_PRODUCTION:
+  ADMIN_LOGIN_PASSWORD = generate_runtime_secret()
+  record_dev_credential("Admin portal", f"username={ADMIN_LOGIN_USERNAME}", "SIMRP_ADMIN_LOGIN_PASSWORD", ADMIN_LOGIN_PASSWORD)
+if ENABLE_DEMO_SEED and not DEMO_PASSWORD:
+  if IS_PRODUCTION:
+    raise RuntimeError("SIMRP_DEMO_PASSWORD is required when SIMRP_ENABLE_DEMO_SEED=true in production")
+  DEMO_PASSWORD = generate_runtime_secret()
+  record_dev_credential(
+    "Demo user accounts",
+    "emails=relawan.demo@simrp.app, moderator1.demo@simrp.app, ksh.demo@simrp.app, ...",
+    "SIMRP_DEMO_PASSWORD",
+    DEMO_PASSWORD,
+  )
 
 _rate_lock = threading.Lock()
 _rate_hits = {}
@@ -499,10 +567,11 @@ def init_schema():
       checklist_json TEXT NOT NULL,
       outcome_tags_json TEXT NOT NULL,
       photo_url TEXT,
-      status TEXT NOT NULL CHECK(status IN ('pending','verified','rejected')),
+      status TEXT NOT NULL CHECK(status IN ('pending','under_review','verified','rejected')),
       points_awarded INTEGER NOT NULL DEFAULT 0,
       verified_by_user_id TEXT,
       verified_at TEXT,
+      reject_reason TEXT,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL,
       FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE,
@@ -695,6 +764,77 @@ def migrate_schema(conn):
   report_cols = {row["name"] for row in conn.execute("PRAGMA table_info(event_reports)").fetchall()}
   if "reject_reason" not in report_cols:
     execute(conn, "ALTER TABLE event_reports ADD COLUMN reject_reason TEXT")
+
+  # Migrasi CHECK constraint event_reports: tambah 'under_review' ke status yang valid.
+  # Deteksi dengan mencoba SELECT yang pasti gagal jika constraint lama masih aktif.
+  report_constraint_ok = False
+  try:
+    # Cara paling andal: cek sql teks di sqlite_master
+    schema_row = conn.execute(
+      "SELECT sql FROM sqlite_master WHERE type='table' AND name='event_reports'"
+    ).fetchone()
+    if schema_row and "under_review" in (schema_row["sql"] or ""):
+      report_constraint_ok = True
+  except Exception:
+    pass
+
+  if not report_constraint_ok:
+    # Recreate tabel dengan constraint baru mengikuti pola migrasi events.
+    conn.commit()  # Ensure no pending transaction before changing pragmas
+    conn.execute("PRAGMA foreign_keys = OFF")
+    conn.execute("BEGIN TRANSACTION")
+    try:
+      conn.execute("ALTER TABLE event_reports RENAME TO event_reports_legacy")
+      conn.execute(
+        """
+        CREATE TABLE event_reports (
+          id TEXT PRIMARY KEY,
+          event_id TEXT NOT NULL,
+          user_id TEXT NOT NULL,
+          participants INTEGER NOT NULL,
+          checklist_json TEXT NOT NULL,
+          outcome_tags_json TEXT NOT NULL,
+          photo_url TEXT,
+          status TEXT NOT NULL CHECK(status IN ('pending','under_review','verified','rejected')),
+          points_awarded INTEGER NOT NULL DEFAULT 0,
+          verified_by_user_id TEXT,
+          verified_at TEXT,
+          reject_reason TEXT,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE,
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+        """
+      )
+      legacy_report_cols = {row["name"] for row in conn.execute("PRAGMA table_info(event_reports_legacy)").fetchall()}
+      reject_reason_expr = "reject_reason" if "reject_reason" in legacy_report_cols else "NULL"
+      conn.execute(
+        f"""
+        INSERT INTO event_reports(
+          id, event_id, user_id, participants, checklist_json, outcome_tags_json,
+          photo_url, status, points_awarded, verified_by_user_id, verified_at,
+          reject_reason, created_at, updated_at
+        )
+        SELECT
+          id, event_id, user_id, participants, checklist_json, outcome_tags_json,
+          photo_url, status, points_awarded, verified_by_user_id, verified_at,
+          {reject_reason_expr}, created_at, updated_at
+        FROM event_reports_legacy
+        """
+      )
+      conn.execute("DROP TABLE event_reports_legacy")
+
+      fk_violations = conn.execute("PRAGMA foreign_key_check(event_reports)").fetchall()
+      if fk_violations:
+        raise ValueError(f"Foreign key constraint failed after migration: {fk_violations}")
+
+      conn.commit()
+    except Exception:
+      conn.rollback()
+      raise
+    finally:
+      conn.execute("PRAGMA foreign_keys = ON")
 
   event_cols = conn.execute("PRAGMA table_info(events)").fetchall()
   names = {row["name"] for row in event_cols}
@@ -919,10 +1059,10 @@ def insert_user(conn, name, email, password, role_code, *, is_ksh=0, tier=None, 
 def seed_demo(conn):
   admin_seed_password = str(os.environ.get("SIMRP_SEED_ADMIN_PASSWORD", "")).strip()
   if not admin_seed_password:
-    admin_seed_password = "admin" if not IS_PRODUCTION else secrets.token_urlsafe(18)
     if IS_PRODUCTION:
-      print("[SECURITY] Generated random seed admin password via SIMRP_SEED_ADMIN_PASSWORD")
-      print(f"[SECURITY] Seed admin password (save securely): {admin_seed_password}")
+      raise RuntimeError("SIMRP_SEED_ADMIN_PASSWORD is required when SIMRP_ENABLE_DEMO_SEED=true in production")
+    admin_seed_password = generate_runtime_secret()
+    record_dev_credential("Seed admin account", "email=admin@simrp.local", "SIMRP_SEED_ADMIN_PASSWORD", admin_seed_password)
   insert_user(conn, "Administrator", "admin@simrp.local", admin_seed_password, "admin", kelurahan_name="Keputih", sync_existing=True)
   insert_user(conn, "Andi Relawan", "relawan.demo@simrp.app", DEMO_PASSWORD, "user", kelurahan_name="Bulak", sync_existing=True)
   insert_user(conn, "Nia Relawan", "relawan2.demo@simrp.app", DEMO_PASSWORD, "user", kelurahan_name="Keputih", sync_existing=True)
@@ -1100,6 +1240,136 @@ def can_verify_report(user):
   return user["role_code"] in ("moderator_t2", "admin")
 
 
+def auth_dependencies():
+  return {
+    "API_PREFIX": API_PREFIX,
+    "ADMIN_LOGIN_PASSWORD": ADMIN_LOGIN_PASSWORD,
+    "ADMIN_LOGIN_USERNAME": ADMIN_LOGIN_USERNAME,
+    "IS_PRODUCTION": IS_PRODUCTION,
+    "RATE_LIMIT_AUTH_MAX": RATE_LIMIT_AUTH_MAX,
+    "RATE_LIMIT_WINDOW_SECONDS": RATE_LIMIT_WINDOW_SECONDS,
+    "bounded_text": bounded_text,
+    "create_session": create_session,
+    "execute": execute,
+    "get_user_payload": get_user_payload,
+    "hash_password": hash_password,
+    "rate_limited": rate_limited,
+    "user_from_token": user_from_token,
+    "utc_now_iso": utc_now_iso,
+    "valid_email": valid_email,
+    "valid_password": valid_password,
+    "verify_password": verify_password,
+    "write_json": write_json,
+  }
+
+
+def events_dependencies():
+  return {
+    "API_PREFIX": API_PREFIX,
+    "bounded_text": bounded_text,
+    "can_approve_event": can_approve_event,
+    "can_create_event": can_create_event,
+    "create_notification": create_notification,
+    "execute": execute,
+    "log_audit": log_audit,
+    "user_from_token": user_from_token,
+    "utc_now_iso": utc_now_iso,
+    "write_json": write_json,
+  }
+
+
+def reports_dependencies():
+  return {
+    "API_PREFIX": API_PREFIX,
+    "apply_xp": apply_xp,
+    "bounded_text": bounded_text,
+    "can_verify_report": can_verify_report,
+    "create_notification": create_notification,
+    "execute": execute,
+    "log_audit": log_audit,
+    "user_from_token": user_from_token,
+    "utc_now_iso": utc_now_iso,
+    "write_json": write_json,
+  }
+
+
+def collaboration_dependencies():
+  return {
+    "API_PREFIX": API_PREFIX,
+    "bounded_text": bounded_text,
+    "create_notification": create_notification,
+    "execute": execute,
+    "log_audit": log_audit,
+    "user_from_token": user_from_token,
+    "utc_now_iso": utc_now_iso,
+    "valid_email": valid_email,
+    "write_json": write_json,
+  }
+
+
+def geographic_dependencies():
+  return {
+    "API_PREFIX": API_PREFIX,
+    "get_geo_stats": get_geo_stats,
+    "user_from_token": user_from_token,
+    "write_json": write_json,
+  }
+
+
+def admin_dependencies():
+  return {
+    "API_PREFIX": API_PREFIX,
+    "bounded_text": bounded_text,
+    "execute": execute,
+    "log_audit": log_audit,
+    "user_from_token": user_from_token,
+    "utc_now_iso": utc_now_iso,
+    "write_json": write_json,
+  }
+
+
+def notifications_dependencies():
+  return {
+    "API_PREFIX": API_PREFIX,
+    "execute": execute,
+    "user_from_token": user_from_token,
+    "write_json": write_json,
+  }
+
+
+def certificates_dependencies():
+  return {
+    "API_PREFIX": API_PREFIX,
+    "user_from_token": user_from_token,
+    "write_json": write_json,
+  }
+
+
+def rewards_dependencies():
+  return {
+    "API_PREFIX": API_PREFIX,
+    "bounded_text": bounded_text,
+    "create_notification": create_notification,
+    "execute": execute,
+    "log_audit": log_audit,
+    "user_from_token": user_from_token,
+    "utc_now_iso": utc_now_iso,
+    "write_json": write_json,
+  }
+
+
+def users_dependencies():
+  return {
+    "API_PREFIX": API_PREFIX,
+    "bounded_text": bounded_text,
+    "execute": execute,
+    "get_user_payload": get_user_payload,
+    "user_from_token": user_from_token,
+    "utc_now_iso": utc_now_iso,
+    "write_json": write_json,
+  }
+
+
 def apply_xp(conn, event_row, participants):
   kelurahan_id = event_row["kelurahan_id"]
   pillar = int(event_row["pillar"])
@@ -1141,530 +1411,35 @@ class Handler(BaseHTTPRequestHandler):
       path = parsed.path
       query = parse_qs(parsed.query)
 
-      if path == f"{API_PREFIX}/health":
-        return write_json(self, 200, {"status": "ok"})
+      if auth_api.handle_get(self, conn, path, auth_dependencies()):
+        return
 
-      if path == f"{API_PREFIX}/auth/me":
-        user = user_from_token(conn, self.headers.get("Authorization"))
-        if not user:
-          return write_json(self, 401, {"error": "Unauthorized"})
-        return write_json(self, 200, {"user": get_user_payload(conn, user)})
+      if events_api.handle_get(self, conn, path, query, events_dependencies()):
+        return
 
-      if path.startswith(f"{API_PREFIX}/kodepos/"):
-        code = path.split("/")[-1]
-        rows = conn.execute(
-          """
-          SELECT postal_codes.code AS kodepos, kelurahan.name AS kelurahan, kecamatan.name AS kecamatan
-          FROM postal_codes
-          JOIN kampung_mapping ON kampung_mapping.postal_code_id = postal_codes.id
-          JOIN kelurahan ON kelurahan.id = kampung_mapping.kelurahan_id
-          JOIN kecamatan ON kecamatan.id = kelurahan.kecamatan_id
-          WHERE postal_codes.code = ?
-          ORDER BY kelurahan.name
-          """,
-          (code,),
-        ).fetchall()
-        if not rows:
-          return write_json(self, 404, {"error": "Kodepos tidak ditemukan"})
-        payload = [{"kelurahan": r["kelurahan"], "kecamatan": r["kecamatan"]} for r in rows]
-        return write_json(self, 200, {"kodepos": code, "kelurahan": payload})
+      if reports_api.handle_get(self, conn, path, query, reports_dependencies()):
+        return
 
-      if path == f"{API_PREFIX}/geo/options":
-        rows = conn.execute(
-          """
-          SELECT
-            kecamatan.id AS kec_id,
-            kecamatan.name AS kec_name,
-            kelurahan.id AS kel_id,
-            kelurahan.name AS kel_name,
-            postal_codes.code AS kodepos
-          FROM kampung_mapping
-          JOIN kelurahan ON kelurahan.id = kampung_mapping.kelurahan_id
-          JOIN kecamatan ON kecamatan.id = kelurahan.kecamatan_id
-          JOIN postal_codes ON postal_codes.id = kampung_mapping.postal_code_id
-          ORDER BY kecamatan.name ASC, kelurahan.name ASC, postal_codes.code ASC
-          """
-        ).fetchall()
-        grouped = {}
-        for row in rows:
-          if row["kec_id"] not in grouped:
-            grouped[row["kec_id"]] = {"id": row["kec_id"], "name": row["kec_name"], "kelurahan": [], "_kel_idx": {}}
-          if row["kel_id"] is not None:
-            key = row["kel_id"]
-            if key not in grouped[row["kec_id"]]["_kel_idx"]:
-              grouped[row["kec_id"]]["_kel_idx"][key] = len(grouped[row["kec_id"]]["kelurahan"])
-              grouped[row["kec_id"]]["kelurahan"].append({"id": row["kel_id"], "name": row["kel_name"], "kodepos": []})
-            kel_idx = grouped[row["kec_id"]]["_kel_idx"][key]
-            if row["kodepos"] is not None and row["kodepos"] not in grouped[row["kec_id"]]["kelurahan"][kel_idx]["kodepos"]:
-              grouped[row["kec_id"]]["kelurahan"][kel_idx]["kodepos"].append(row["kodepos"])
-        result = []
-        for kec in grouped.values():
-          out = {"id": kec["id"], "name": kec["name"], "kelurahan": kec["kelurahan"]}
-          result.append(out)
-        return write_json(self, 200, {"kecamatan": result})
+      if collaboration_api.handle_get(self, conn, path, query, collaboration_dependencies()):
+        return
 
-      if path == f"{API_PREFIX}/geo/stats":
-        stats = get_geo_stats()
-        return write_json(
-          self,
-          200,
-          {
-            "stats": {
-              "kecamatan": int(stats["kecamatan"]),
-              "kelurahan": int(stats["kelurahan"]),
-              "kodepos": int(stats["kodepos"]),
-            }
-          },
-        )
+      if geographic_api.handle_get(self, conn, path, geographic_dependencies()):
+        return
 
-      if path == f"{API_PREFIX}/landing/leaderboard":
-        rows = conn.execute(
-          """
-          SELECT kelurahan.name AS kelurahan, kecamatan.name AS kecamatan, xp_kelurahan.total_xp AS xp
-          FROM xp_kelurahan
-          JOIN kelurahan ON kelurahan.id = xp_kelurahan.kelurahan_id
-          JOIN kecamatan ON kecamatan.id = kelurahan.kecamatan_id
-          WHERE EXISTS (
-            SELECT 1 FROM kampung_mapping WHERE kampung_mapping.kelurahan_id = kelurahan.id
-          )
-          ORDER BY xp_kelurahan.total_xp DESC, kelurahan.name ASC
-          LIMIT 7
-          """
-        ).fetchall()
-        entries = [
-          {
-            "rank": idx + 1,
-            "kelurahan": row["kelurahan"],
-            "kecamatan": row["kecamatan"],
-            "xp": int(row["xp"]),
-          }
-          for idx, row in enumerate(rows)
-        ]
-        return write_json(self, 200, {"leaderboard": entries})
+      if admin_api.handle_get(self, conn, path, admin_dependencies()):
+        return
 
-      if path.startswith(f"{API_PREFIX}/certificates/") and path.endswith("/verify"):
-        cert_id = path.split("/")[-2]
-        cert = conn.execute(
-          """
-          SELECT
-            certificates.*,
-            users.name AS user_name,
-            events.title AS event_title,
-            events.event_date AS event_date
-          FROM certificates
-          JOIN users ON users.id = certificates.user_id
-          JOIN events ON events.id = certificates.event_id
-          WHERE certificates.id = ?
-          """,
-          (cert_id,),
-        ).fetchone()
-        if not cert:
-          return write_json(self, 404, {"valid": False, "error": "Sertifikat tidak ditemukan"})
-        return write_json(
-          self,
-          200,
-          {
-            "valid": True,
-            "certificate": {
-              "id": cert["id"],
-              "userName": cert["user_name"],
-              "eventTitle": cert["event_title"],
-              "eventDate": cert["event_date"],
-              "hash": cert["certificate_hash"],
-              "issuedAt": cert["issued_at"],
-            },
-          },
-        )
+      if notifications_api.handle_get(self, conn, path, notifications_dependencies()):
+        return
 
-      if path.startswith(f"{API_PREFIX}/kampung/") and path.endswith("/pillars"):
-        actor = user_from_token(conn, self.headers.get("Authorization"))
-        if not actor:
-          return write_json(self, 401, {"error": "Unauthorized"})
-        kel_id_raw = path.split("/")[-2]
-        try:
-          kel_id = int(kel_id_raw)
-        except Exception:
-          return write_json(self, 400, {"error": "ID kampung tidak valid"})
-        rows = conn.execute(
-          "SELECT pillar, xp FROM xp_pillar WHERE kelurahan_id = ?",
-          (kel_id,),
-        ).fetchall()
-        pillars = {int(r["pillar"]): int(r["xp"]) for r in rows}
-        return write_json(
-          self,
-          200,
-          {
-            "pillars": {
-              "lingkungan": pillars.get(1, 0),
-              "ekonomi": pillars.get(2, 0),
-              "kemasyarakatan": pillars.get(3, 0),
-              "sosialBudaya": pillars.get(4, 0),
-            }
-          },
-        )
+      if certificates_api.handle_get(self, conn, path, certificates_dependencies()):
+        return
 
-      if path == f"{API_PREFIX}/notifications/count":
-        actor = user_from_token(conn, self.headers.get("Authorization"))
-        if not actor:
-          return write_json(self, 401, {"error": "Unauthorized"})
-        unread = conn.execute(
-          "SELECT COUNT(*) AS c FROM notifications WHERE user_id = ? AND is_read = 0",
-          (actor["id"],),
-        ).fetchone()["c"]
-        return write_json(self, 200, {"unread": int(unread)})
+      if rewards_api.handle_get(self, conn, path, rewards_dependencies()):
+        return
 
-      if path == f"{API_PREFIX}/notifications":
-        actor = user_from_token(conn, self.headers.get("Authorization"))
-        if not actor:
-          return write_json(self, 401, {"error": "Unauthorized"})
-        rows = conn.execute(
-          """
-          SELECT id, type, title, message, is_read, entity_type, entity_id, created_at
-          FROM notifications
-          WHERE user_id = ?
-          ORDER BY created_at DESC
-          LIMIT 100
-          """,
-          (actor["id"],),
-        ).fetchall()
-        notifications = [
-          {
-            "id": int(row["id"]),
-            "type": row["type"],
-            "title": row["title"],
-            "message": row["message"],
-            "isRead": bool(row["is_read"]),
-            "entityType": row["entity_type"],
-            "entityId": row["entity_id"],
-            "createdAt": row["created_at"],
-          }
-          for row in rows
-        ]
-        return write_json(self, 200, {"notifications": notifications})
-
-      if path == f"{API_PREFIX}/certificates":
-        actor = user_from_token(conn, self.headers.get("Authorization"))
-        if not actor:
-          return write_json(self, 401, {"error": "Unauthorized"})
-        rows = conn.execute(
-          """
-          SELECT
-            certificates.*,
-            events.title AS event_title,
-            events.event_date AS event_date,
-            users.name AS user_name
-          FROM certificates
-          JOIN events ON events.id = certificates.event_id
-          JOIN users ON users.id = certificates.user_id
-          WHERE certificates.user_id = ?
-          ORDER BY certificates.issued_at DESC
-          """,
-          (actor["id"],),
-        ).fetchall()
-        certificates = [
-          {
-            "id": row["id"],
-            "userId": row["user_id"],
-            "userName": row["user_name"],
-            "eventId": row["event_id"],
-            "eventTitle": row["event_title"],
-            "eventDate": row["event_date"],
-            "reportId": row["report_id"],
-            "hash": row["certificate_hash"],
-            "issuedAt": row["issued_at"],
-          }
-          for row in rows
-        ]
-        return write_json(self, 200, {"certificates": certificates})
-
-      if path == f"{API_PREFIX}/rewards/catalog":
-        actor = user_from_token(conn, self.headers.get("Authorization"))
-        if not actor:
-          return write_json(self, 401, {"error": "Unauthorized"})
-        rows = conn.execute(
-          """
-          SELECT id, name, description, xp_cost, stock, is_active
-          FROM voucher_catalog
-          WHERE is_active = 1
-          ORDER BY xp_cost ASC, name ASC
-          """
-        ).fetchall()
-        catalog = [
-          {
-            "id": row["id"],
-            "name": row["name"],
-            "description": row["description"] or "",
-            "xpCost": int(row["xp_cost"]),
-            "stock": int(row["stock"]),
-            "isActive": bool(row["is_active"]),
-          }
-          for row in rows
-        ]
-        return write_json(self, 200, {"catalog": catalog})
-
-      if path == f"{API_PREFIX}/users/me/participations":
-        actor = user_from_token(conn, self.headers.get("Authorization"))
-        if not actor:
-          return write_json(self, 401, {"error": "Unauthorized"})
-        rows = conn.execute(
-          """
-          SELECT
-            ep.event_id,
-            ep.status AS participation_status,
-            ep.checklist_done,
-            ep.created_at AS joined_at,
-            ep.updated_at AS participation_updated_at,
-            e.title AS event_title,
-            e.event_date AS event_date,
-            e.status AS event_status,
-            er.id AS report_id,
-            er.status AS report_status
-          FROM event_participation ep
-          JOIN events e ON e.id = ep.event_id
-          LEFT JOIN event_reports er ON er.event_id = ep.event_id AND er.user_id = ep.user_id
-          WHERE ep.user_id = ?
-          ORDER BY e.event_date DESC, ep.created_at DESC
-          """,
-          (actor["id"],),
-        ).fetchall()
-        participations = [
-          {
-            "eventId": row["event_id"],
-            "eventTitle": row["event_title"],
-            "eventDate": row["event_date"],
-            "eventStatus": row["event_status"],
-            "status": row["participation_status"],
-            "checklistDone": bool(row["checklist_done"]),
-            "joinedAt": row["joined_at"],
-            "updatedAt": row["participation_updated_at"],
-            "reported": row["report_id"] is not None,
-            "reportId": row["report_id"],
-            "reportStatus": row["report_status"],
-          }
-          for row in rows
-        ]
-        return write_json(self, 200, {"participations": participations})
-
-      if path == f"{API_PREFIX}/kampung":
-        actor = user_from_token(conn, self.headers.get("Authorization"))
-        if not actor:
-          return write_json(self, 401, {"error": "Unauthorized"})
-        rows = conn.execute(
-          """
-          SELECT kelurahan.id AS id, kelurahan.name AS name, kecamatan.name AS kecamatan, xp_kelurahan.total_xp AS xp
-          FROM kelurahan
-          JOIN kecamatan ON kecamatan.id = kelurahan.kecamatan_id
-          JOIN xp_kelurahan ON xp_kelurahan.kelurahan_id = kelurahan.id
-          WHERE EXISTS (
-            SELECT 1 FROM kampung_mapping WHERE kampung_mapping.kelurahan_id = kelurahan.id
-          )
-          ORDER BY xp_kelurahan.total_xp DESC, kelurahan.name ASC
-          LIMIT 100
-          """
-        ).fetchall()
-        data = [{"id": r["id"], "name": r["name"], "kecamatan": r["kecamatan"], "xp": int(r["xp"])} for r in rows]
-        return write_json(self, 200, {"kampung": data})
-
-      if path == f"{API_PREFIX}/collaboration-requests":
-        actor = user_from_token(conn, self.headers.get("Authorization"))
-        if not actor:
-          return write_json(self, 401, {"error": "Unauthorized"})
-        if actor["role_code"] not in ("moderator_t2", "admin"):
-          return write_json(self, 403, {"error": "Hanya Moderator Tier 2/Admin"})
-        status_filter = query.get("status", [None])[0]
-        sql = """
-          SELECT
-            collaboration_requests.*,
-            users.name AS reviewer_name,
-            kecamatan.name AS scope_kecamatan_name,
-            kelurahan.name AS scope_kelurahan_name
-          FROM collaboration_requests
-          LEFT JOIN users ON users.id = collaboration_requests.reviewed_by_user_id
-          LEFT JOIN kecamatan ON kecamatan.id = collaboration_requests.scope_kecamatan_id
-          LEFT JOIN kelurahan ON kelurahan.id = collaboration_requests.scope_kelurahan_id
-          WHERE 1=1
-        """
-        params = []
-        if status_filter in ("pending", "approved", "rejected"):
-          sql += " AND collaboration_requests.status = ?"
-          params.append(status_filter)
-        sql += " ORDER BY collaboration_requests.created_at DESC"
-        rows = conn.execute(sql, tuple(params)).fetchall()
-        requests = []
-        for row in rows:
-          requests.append(
-            {
-              "id": row["id"],
-              "organizationName": row["organization_name"],
-              "picName": row["pic_name"],
-              "email": row["email"],
-              "supportType": row["support_type"],
-              "contributionScope": row["contribution_scope"] or "kota",
-              "scopeKecamatanId": row["scope_kecamatan_id"],
-              "scopeKelurahanId": row["scope_kelurahan_id"],
-              "scopeKecamatanName": row["scope_kecamatan_name"],
-              "scopeKelurahanName": row["scope_kelurahan_name"],
-              "supportDescription": row["support_description"],
-              "status": row["status"],
-              "reviewedByName": row["reviewer_name"],
-              "reviewedAt": row["reviewed_at"],
-              "createdAt": row["created_at"],
-            }
-          )
-        return write_json(self, 200, {"requests": requests})
-
-      if path == f"{API_PREFIX}/users":
-        actor = user_from_token(conn, self.headers.get("Authorization"))
-        if not actor:
-          return write_json(self, 401, {"error": "Unauthorized"})
-        role_filter = query.get("role", [None])[0]
-        kampung_filter = query.get("kampungId", [None])[0]
-        sql = """
-          SELECT users.*, kelurahan.name AS kel_name, kecamatan.name AS kec_name
-          FROM users
-          LEFT JOIN kelurahan ON kelurahan.id = users.kelurahan_id
-          LEFT JOIN kecamatan ON kecamatan.id = users.kecamatan_id
-          WHERE 1=1
-        """
-        params = []
-        if role_filter == "user":
-          sql += " AND users.role_code IN ('user','ksh')"
-        if kampung_filter:
-          sql += " AND users.kelurahan_id = ?"
-          params.append(int(kampung_filter))
-        sql += " ORDER BY users.name ASC"
-        rows = conn.execute(sql, tuple(params)).fetchall()
-        users = []
-        for r in rows:
-          users.append(
-            {
-              "id": r["id"],
-              "name": r["name"],
-              "email": r["email"],
-              "role": "admin" if r["role_code"] == "admin" else ("moderator" if str(r["role_code"]).startswith("moderator_t") else "user"),
-              "roleCode": r["role_code"],
-              "isKsh": bool(r["is_ksh"]),
-              "moderatorTier": r["moderator_tier"],
-              "tier2Badge": r["tier2_badge"],
-              "kecamatan": r["kec_name"],
-              "kelurahan": r["kel_name"],
-              "kampungId": r["kelurahan_id"],
-              "points": int(r["points"]),
-            }
-          )
-        return write_json(self, 200, {"users": users})
-
-      if path == f"{API_PREFIX}/events":
-        actor = user_from_token(conn, self.headers.get("Authorization"))
-        if not actor:
-          return write_json(self, 401, {"error": "Unauthorized"})
-        status_filter = query.get("status", [None])[0]
-        sql = """
-          SELECT events.*, kelurahan.name AS kelurahan, kecamatan.name AS kecamatan
-          FROM events
-          LEFT JOIN kelurahan ON kelurahan.id = events.kelurahan_id
-          LEFT JOIN kecamatan ON kecamatan.id = events.kecamatan_id
-          WHERE 1=1
-        """
-        params = []
-        if status_filter:
-          sql += " AND events.status = ?"
-          params.append(status_filter)
-        if actor and actor["is_ksh"]:
-          sql += " AND ((events.scope_type = 'kelurahan' AND events.kelurahan_id = ?) OR (events.scope_type = 'kecamatan' AND events.kecamatan_id = ?))"
-          params.append(actor["kelurahan_id"])
-          params.append(actor["kecamatan_id"])
-        sql += " ORDER BY events.event_date ASC"
-        rows = conn.execute(sql, tuple(params)).fetchall()
-        out = []
-        for r in rows:
-          participants = conn.execute("SELECT user_id FROM event_participation WHERE event_id = ?", (r["id"],)).fetchall()
-          out.append(
-            {
-              "id": r["id"],
-              "title": r["title"],
-              "description": r["description"],
-              "pillar": int(r["pillar"]),
-              "date": r["event_date"],
-              "time": r["event_time"],
-              "location": r["location"],
-              "quota": int(r["quota"]),
-              "scopeType": r["scope_type"],
-              "kecamatanId": r["kecamatan_id"],
-              "kelurahanId": r["kelurahan_id"],
-              "createdByUserId": r["created_by_user_id"],
-              "status": r["status"],
-              "kelurahan": r["kelurahan"],
-              "kecamatan": r["kecamatan"],
-              "participants": [p["user_id"] for p in participants],
-            }
-          )
-        return write_json(self, 200, {"events": out})
-
-      if path == f"{API_PREFIX}/reports":
-        actor = user_from_token(conn, self.headers.get("Authorization"))
-        if not actor:
-          return write_json(self, 401, {"error": "Unauthorized"})
-        status_filter = query.get("status", [None])[0]
-        user_filter = query.get("userId", [None])[0]
-        sql = "SELECT * FROM event_reports WHERE 1=1"
-        params = []
-        if status_filter:
-          sql += " AND status = ?"
-          params.append(status_filter)
-        if user_filter:
-          sql += " AND user_id = ?"
-          params.append(user_filter)
-        sql += " ORDER BY created_at DESC"
-        rows = conn.execute(sql, tuple(params)).fetchall()
-        out = []
-        for r in rows:
-          out.append(
-            {
-              "id": r["id"],
-              "eventId": r["event_id"],
-              "userId": r["user_id"],
-              "participants": int(r["participants"]),
-              "outcomeTags": json.loads(r["outcome_tags_json"] or "[]"),
-              "photoUrl": r["photo_url"],
-              "status": r["status"],
-              "rejectReason": r["reject_reason"] or "",
-              "points": int(r["points_awarded"]),
-              "createdAt": r["created_at"],
-            }
-          )
-        return write_json(self, 200, {"reports": out})
-
-      if path == f"{API_PREFIX}/recommendations":
-        return write_json(self, 410, {"error": "ASN recommendation is off-system"})
-
-      if path == f"{API_PREFIX}/admin/temporary-adjustments":
-        actor = user_from_token(conn, self.headers.get("Authorization"))
-        if not actor or actor["role_code"] != "admin":
-          return write_json(self, 403, {"error": "Admin only"})
-        rows = conn.execute(
-          """
-          SELECT temporary_adjustments.*, users.name AS user_name
-          FROM temporary_adjustments
-          JOIN users ON users.id = temporary_adjustments.user_id
-          ORDER BY temporary_adjustments.created_at DESC
-          """
-        ).fetchall()
-        out = []
-        for r in rows:
-          value = json.loads(r["value_json"])
-          out.append(
-            {
-              "id": r["id"],
-              "type": r["adjustment_type"],
-              "value": value.get("points") if r["adjustment_type"] == "points" else value.get("badgeId", ""),
-              "reason": r["reason"],
-              "grantedAt": r["created_at"],
-              "expiresAt": r["expires_at"],
-              "targetUserName": r["user_name"],
-            }
-          )
-        return write_json(self, 200, {"adjustments": out})
+      if users_api.handle_get(self, conn, path, query, users_dependencies()):
+        return
 
       return write_json(self, 404, {"error": "Not found"})
     except ValueError as exc:
@@ -1687,857 +1462,33 @@ class Handler(BaseHTTPRequestHandler):
         return write_json(self, 429, {"error": "Terlalu banyak permintaan, coba lagi sebentar"})
       body = parse_json_body(self)
 
-      if path == f"{API_PREFIX}/auth/signup":
-        if rate_limited(self, "auth-signup", RATE_LIMIT_AUTH_MAX, RATE_LIMIT_WINDOW_SECONDS):
-          return write_json(self, 429, {"error": "Terlalu banyak percobaan signup, coba lagi nanti"})
-        if not body.get("email") or not body.get("password") or not body.get("name"):
-          return write_json(self, 400, {"error": "Email, password, name wajib"})
-        email = str(body.get("email")).strip().lower()
-        if not valid_email(email):
-          return write_json(self, 400, {"error": "Format email tidak valid"})
-        if not valid_password(body.get("password")):
-          return write_json(self, 400, {"error": "Password minimal 8 karakter dan kombinasi huruf-angka"})
-        name = bounded_text(body.get("name"), 120)
-        nik = bounded_text(body.get("nik", ""), 32)
-        rw = bounded_text(body.get("rw", ""), 16)
-        if conn.execute("SELECT id FROM users WHERE email = ?", (email,)).fetchone():
-          return write_json(self, 400, {"error": "Email sudah terdaftar"})
-        kel_name = bounded_text(body.get("kelurahan"), 120)
-        kel = conn.execute(
-          """
-          SELECT kelurahan.id AS id, kecamatan.id AS kec_id
-          FROM kelurahan JOIN kecamatan ON kecamatan.id = kelurahan.kecamatan_id
-          WHERE kelurahan.name = ? LIMIT 1
-          """,
-          (kel_name,),
-        ).fetchone()
-        if not kel:
-          return write_json(self, 400, {"error": "Kelurahan tidak ditemukan"})
-        user_id = str(uuid.uuid4())
-        now = utc_now_iso()
-        execute(
-          conn,
-          """
-          INSERT INTO users(
-            id, name, email, password_hash, nik, rw, role_code, is_ksh, moderator_tier, email_verified,
-            kelurahan_id, kecamatan_id, points, badges_json, created_at, updated_at
-          )
-          VALUES(?, ?, ?, ?, ?, ?, 'user', 0, NULL, 1, ?, ?, 0, '[]', ?, ?)
-          """,
-          (
-            user_id,
-            name,
-            email,
-            hash_password(body.get("password")),
-            nik,
-            rw,
-            kel["id"],
-            kel["kec_id"],
-            now,
-            now,
-          ),
-        )
-        user = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
-        token = create_session(conn, user_id)
-        return write_json(self, 200, {"success": True, "token": token, "user": get_user_payload(conn, user)})
+      if auth_api.handle_post(self, conn, path, body, auth_dependencies()):
+        return
 
-      if path == f"{API_PREFIX}/auth/login":
-        if rate_limited(self, "auth-login", RATE_LIMIT_AUTH_MAX, RATE_LIMIT_WINDOW_SECONDS):
-          return write_json(self, 429, {"error": "Terlalu banyak percobaan login, coba lagi nanti"})
-        email = str(body.get("email", "")).strip().lower()
-        if not valid_email(email):
-          return write_json(self, 400, {"error": "Format email tidak valid"})
-        password = str(body.get("password", ""))
-        user = conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
-        if not user or not verify_password(password, user["password_hash"]):
-          return write_json(self, 401, {"error": "Email/password salah"})
-        token = create_session(conn, user["id"])
-        return write_json(self, 200, {"success": True, "token": token, "user": get_user_payload(conn, user)})
+      if events_api.handle_post(self, conn, path, body, events_dependencies()):
+        return
 
-      if path == f"{API_PREFIX}/auth/admin-login":
-        if rate_limited(self, "auth-admin-login", RATE_LIMIT_AUTH_MAX, RATE_LIMIT_WINDOW_SECONDS):
-          return write_json(self, 429, {"error": "Terlalu banyak percobaan login admin, coba lagi nanti"})
-        if IS_PRODUCTION and (not ADMIN_LOGIN_USERNAME or not ADMIN_LOGIN_PASSWORD):
-          return write_json(self, 403, {"error": "Admin login tidak dikonfigurasi untuk production"})
-        username = str(body.get("username", "")).strip()
-        password = str(body.get("password", ""))
-        expected_username = ADMIN_LOGIN_USERNAME if ADMIN_LOGIN_USERNAME else "admin"
-        expected_password = ADMIN_LOGIN_PASSWORD if ADMIN_LOGIN_PASSWORD else "admin"
-        valid_user = hmac.compare_digest(username, expected_username)
-        valid_pass = hmac.compare_digest(password, expected_password)
-        if not valid_user or not valid_pass:
-          return write_json(self, 401, {"error": "Invalid credentials"})
-        admin = conn.execute("SELECT * FROM users WHERE role_code = 'admin' LIMIT 1").fetchone()
-        if not admin:
-          return write_json(self, 500, {"error": "Akun admin tidak ditemukan"})
-        token = create_session(conn, admin["id"])
-        return write_json(self, 200, {"success": True, "token": token, "user": get_user_payload(conn, admin)})
+      if reports_api.handle_post(self, conn, path, body, reports_dependencies()):
+        return
 
-      if path == f"{API_PREFIX}/collaboration-requests":
-        submitter = user_from_token(conn, self.headers.get("Authorization"))
-        organization_name = bounded_text(body.get("organizationName", ""), 180)
-        pic_name = bounded_text(body.get("picName", ""), 120)
-        email = str(body.get("email", "")).strip().lower()
-        support_type = str(body.get("supportType", "")).strip().lower()
-        contribution_scope = str(body.get("contributionScope", "kota")).strip().lower()
-        support_description = bounded_text(body.get("supportDescription", ""), 2000)
-        if not organization_name or not pic_name or not email or not support_type or not support_description:
-          return write_json(self, 400, {"error": "Semua field kolaborasi wajib diisi"})
-        if support_type not in ("dana", "konsumsi", "peralatan", "media_partner", "lainnya"):
-          return write_json(self, 400, {"error": "Jenis dukungan tidak valid"})
-        if contribution_scope not in ("kota", "kecamatan", "kelurahan"):
-          return write_json(self, 400, {"error": "Skala kontribusi tidak valid"})
-        if not valid_email(email):
-          return write_json(self, 400, {"error": "Format email tidak valid"})
-        scope_kecamatan_id = None
-        scope_kelurahan_id = None
-        if contribution_scope in ("kecamatan", "kelurahan"):
-          try:
-            scope_kecamatan_id = int(body.get("kecamatanId"))
-          except Exception:
-            return write_json(self, 400, {"error": "Kecamatan wajib dipilih untuk skala ini"})
-          kec = conn.execute("SELECT id FROM kecamatan WHERE id = ?", (scope_kecamatan_id,)).fetchone()
-          if not kec:
-            return write_json(self, 400, {"error": "Kecamatan tidak ditemukan"})
-        if contribution_scope == "kelurahan":
-          try:
-            scope_kelurahan_id = int(body.get("kelurahanId"))
-          except Exception:
-            return write_json(self, 400, {"error": "Kelurahan wajib dipilih untuk skala kelurahan"})
-          kel = conn.execute(
-            "SELECT id FROM kelurahan WHERE id = ? AND kecamatan_id = ?",
-            (scope_kelurahan_id, scope_kecamatan_id),
-          ).fetchone()
-          if not kel:
-            return write_json(self, 400, {"error": "Kelurahan tidak sesuai kecamatan pilihan"})
-        req_id = f"collab-{uuid.uuid4().hex[:10]}"
-        now = utc_now_iso()
-        execute(
-          conn,
-          """
-          INSERT INTO collaboration_requests(
-            id, organization_name, pic_name, email, support_type, contribution_scope,
-            scope_kecamatan_id, scope_kelurahan_id, support_description,
-            submitted_by_user_id, status, reviewed_by_user_id, reviewed_at, created_at, updated_at
-          )
-          VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', NULL, NULL, ?, ?)
-          """,
-          (
-            req_id,
-            organization_name,
-            pic_name,
-            email,
-            support_type,
-            contribution_scope,
-            scope_kecamatan_id,
-            scope_kelurahan_id,
-            support_description,
-            submitter["id"] if submitter else None,
-            now,
-            now,
-          ),
-        )
-        return write_json(self, 200, {"success": True, "request": {"id": req_id}})
+      if collaboration_api.handle_post(self, conn, path, body, collaboration_dependencies()):
+        return
 
-      if path == f"{API_PREFIX}/auth/logout":
-        auth = self.headers.get("Authorization")
-        if not auth or not auth.startswith("Bearer "):
-          return write_json(self, 401, {"error": "Unauthorized"})
-        token = auth.split(" ", 1)[1].strip()
-        execute(conn, "DELETE FROM sessions WHERE token = ?", (token,))
-        return write_json(self, 200, {"success": True})
+      if admin_api.handle_post(self, conn, path, body, admin_dependencies()):
+        return
+
+      if notifications_api.handle_post(self, conn, path, body, notifications_dependencies()):
+        return
+
+      if rewards_api.handle_post(self, conn, path, body, rewards_dependencies()):
+        return
 
       actor = user_from_token(conn, self.headers.get("Authorization"))
       if not actor:
         return write_json(self, 401, {"error": "Unauthorized"})
 
-      if path.endswith("/read") and path.startswith(f"{API_PREFIX}/notifications/"):
-        notif_id = path.split("/")[-2]
-        try:
-          notif_id_int = int(notif_id)
-        except Exception:
-          return write_json(self, 400, {"error": "ID notifikasi tidak valid"})
-        updated = execute(
-          conn,
-          "UPDATE notifications SET is_read = 1 WHERE id = ? AND user_id = ?",
-          (notif_id_int, actor["id"]),
-        ).rowcount
-        if updated == 0:
-          return write_json(self, 404, {"error": "Notifikasi tidak ditemukan"})
-        return write_json(self, 200, {"success": True})
-
-      if path == f"{API_PREFIX}/rewards/redeem":
-        voucher_id = bounded_text(body.get("voucherId", ""), 120)
-        if not voucher_id:
-          return write_json(self, 400, {"error": "voucherId wajib diisi"})
-        voucher = conn.execute(
-          """
-          SELECT id, name, xp_cost, stock, is_active
-          FROM voucher_catalog
-          WHERE id = ?
-          """,
-          (voucher_id,),
-        ).fetchone()
-        if not voucher or not bool(voucher["is_active"]):
-          return write_json(self, 404, {"error": "Voucher tidak tersedia"})
-        if int(voucher["stock"]) <= 0:
-          return write_json(self, 400, {"error": "Stok voucher habis"})
-        if int(actor["points"]) < int(voucher["xp_cost"]):
-          return write_json(self, 400, {"error": "XP kamu belum cukup untuk menukar voucher ini"})
-
-        now = utc_now_iso()
-        stock_updated = execute(
-          conn,
-          "UPDATE voucher_catalog SET stock = stock - 1 WHERE id = ? AND stock > 0 AND is_active = 1",
-          (voucher_id,),
-        ).rowcount
-        if stock_updated == 0:
-          return write_json(self, 400, {"error": "Stok voucher habis"})
-
-        points_updated = execute(
-          conn,
-          "UPDATE users SET points = points - ?, updated_at = ? WHERE id = ? AND points >= ?",
-          (int(voucher["xp_cost"]), now, actor["id"], int(voucher["xp_cost"])),
-        ).rowcount
-        if points_updated == 0:
-          execute(conn, "UPDATE voucher_catalog SET stock = stock + 1 WHERE id = ?", (voucher_id,))
-          return write_json(self, 400, {"error": "XP kamu belum cukup untuk menukar voucher ini"})
-
-        redemption_id = f"redeem-{uuid.uuid4().hex[:12]}"
-        voucher_code = f"SIMRP-{secrets.token_hex(4).upper()}"
-        expires_at = (datetime.now(timezone.utc) + timedelta(days=30)).isoformat()
-        execute(
-          conn,
-          """
-          INSERT INTO voucher_redemptions(id, user_id, voucher_id, xp_spent, voucher_code, redeemed_at, expires_at)
-          VALUES(?, ?, ?, ?, ?, ?, ?)
-          """,
-          (
-            redemption_id,
-            actor["id"],
-            voucher_id,
-            int(voucher["xp_cost"]),
-            voucher_code,
-            now,
-            expires_at,
-          ),
-        )
-        create_notification(
-          conn,
-          actor["id"],
-          "reward.redeem",
-          "Penukaran voucher berhasil",
-          f"Kamu menukar {voucher['name']} ({voucher['xp_cost']} XP). Kode: {voucher_code}",
-          "voucher_redemption",
-          redemption_id,
-        )
-        log_audit(
-          conn,
-          actor["id"],
-          "reward.redeem",
-          "voucher",
-          voucher_id,
-          {"voucherCode": voucher_code, "xpSpent": int(voucher["xp_cost"])},
-        )
-        remaining_points_row = conn.execute("SELECT points FROM users WHERE id = ?", (actor["id"],)).fetchone()
-        return write_json(
-          self,
-          200,
-          {
-            "success": True,
-            "redemption": {
-              "id": redemption_id,
-              "voucherId": voucher_id,
-              "voucherName": voucher["name"],
-              "voucherCode": voucher_code,
-              "xpSpent": int(voucher["xp_cost"]),
-              "expiresAt": expires_at,
-              "remainingPoints": int(remaining_points_row["points"]) if remaining_points_row else 0,
-            },
-          },
-        )
-
-      if path.endswith("/approval") and path.startswith(f"{API_PREFIX}/collaboration-requests/"):
-        if actor["role_code"] not in ("moderator_t2", "admin"):
-          return write_json(self, 403, {"error": "Hanya Moderator Tier 2/Admin yang boleh approve"})
-        req_id = path.split("/")[-2]
-        row = conn.execute(
-          "SELECT id, status, organization_name, submitted_by_user_id FROM collaboration_requests WHERE id = ?",
-          (req_id,),
-        ).fetchone()
-        if not row:
-          return write_json(self, 404, {"error": "Permintaan tidak ditemukan"})
-        if row["status"] != "pending":
-          return write_json(self, 400, {"error": "Permintaan sudah diproses"})
-        approved = bool(body.get("approved"))
-        now = utc_now_iso()
-        execute(
-          conn,
-          """
-          UPDATE collaboration_requests
-          SET status = ?, reviewed_by_user_id = ?, reviewed_at = ?, updated_at = ?
-          WHERE id = ?
-          """,
-          ("approved" if approved else "rejected", actor["id"], now, now, req_id),
-        )
-        log_audit(
-          conn,
-          actor["id"],
-          "collab.approve" if approved else "collab.reject",
-          "collaboration_request",
-          req_id,
-          {"approved": approved},
-        )
-        if row["submitted_by_user_id"]:
-          create_notification(
-            conn,
-            row["submitted_by_user_id"],
-            "collaboration.reviewed",
-            "Permintaan kolaborasi diproses",
-            f"Permintaan dari {row['organization_name']} {'disetujui' if approved else 'ditolak'}.",
-            "collaboration_request",
-            req_id,
-          )
-        return write_json(self, 200, {"success": True})
-
-      if path == f"{API_PREFIX}/events":
-        if not can_create_event(actor):
-          return write_json(self, 403, {"error": "Hanya ASN Tier 1/Admin yang boleh input kegiatan"})
-        title = bounded_text(body.get("title", ""), 200)
-        description = bounded_text(body.get("description", ""), 3000)
-        time_text = bounded_text(body.get("time", ""), 16)
-        location = bounded_text(body.get("location", ""), 220)
-        date = str(body.get("date", "")).strip()
-        scope_type = str(body.get("scopeType", "kelurahan")).strip().lower()
-        if not title or not date:
-          return write_json(self, 400, {"error": "Judul dan tanggal wajib diisi"})
-        if scope_type not in ("kelurahan", "kecamatan"):
-          return write_json(self, 400, {"error": "Skala kegiatan harus kelurahan atau kecamatan"})
-        try:
-          kecamatan_id = int(body.get("kecamatanId"))
-        except Exception:
-          return write_json(self, 400, {"error": "Kecamatan wajib dipilih"})
-        kelurahan_id = None
-        if scope_type == "kelurahan":
-          try:
-            kelurahan_id = int(body.get("kelurahanId"))
-          except Exception:
-            return write_json(self, 400, {"error": "Untuk skala kelurahan, kelurahan wajib dipilih"})
-          check = conn.execute(
-            "SELECT id FROM kelurahan WHERE id = ? AND kecamatan_id = ?",
-            (kelurahan_id, kecamatan_id),
-          ).fetchone()
-          if not check:
-            return write_json(self, 400, {"error": "Kelurahan tidak cocok dengan kecamatan pilihan"})
-        else:
-          kec_exists = conn.execute("SELECT id FROM kecamatan WHERE id = ?", (kecamatan_id,)).fetchone()
-          if not kec_exists:
-            return write_json(self, 400, {"error": "Kecamatan tidak ditemukan"})
-        try:
-          quota = int(body.get("quota", 0))
-        except Exception:
-          return write_json(self, 400, {"error": "Kuota harus angka"})
-        if quota < 0 or quota > 10000:
-          return write_json(self, 400, {"error": "Kuota harus 0-10000"})
-        try:
-          pillar = int(body.get("pillar", 1))
-        except Exception:
-          return write_json(self, 400, {"error": "Pilar harus angka"})
-        if pillar not in (1, 2, 3, 4):
-          return write_json(self, 400, {"error": "Pilar harus 1-4"})
-        event_id = f"event-{uuid.uuid4().hex[:10]}"
-        now = utc_now_iso()
-        execute(
-          conn,
-          """
-          INSERT INTO events(
-            id, title, description, pillar, event_date, event_time, location, quota,
-            scope_type, kecamatan_id, kelurahan_id, created_by_user_id, status, created_at, updated_at
-          )
-          VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'draft', ?, ?)
-          """,
-          (
-            event_id,
-            title,
-            description,
-            pillar,
-            date,
-            time_text,
-            location,
-            quota,
-            scope_type,
-            kecamatan_id,
-            kelurahan_id,
-            actor["id"],
-            now,
-            now,
-          ),
-        )
-        return write_json(self, 200, {"success": True, "event": {"id": event_id}})
-
-      if path.endswith("/approval") and path.startswith(f"{API_PREFIX}/events/"):
-        if not can_approve_event(actor):
-          return write_json(self, 403, {"error": "Hanya Moderator Tier 2/Admin yang boleh approve"})
-        event_id = path.split("/")[-2]
-        event = conn.execute("SELECT * FROM events WHERE id = ?", (event_id,)).fetchone()
-        if not event:
-          return write_json(self, 404, {"error": "Event tidak ditemukan"})
-        if actor["role_code"] == "moderator_t2":
-          badge = (actor["tier2_badge"] or "").lower()
-          if event["scope_type"] == "kelurahan":
-            if badge != "lurah" or actor["kelurahan_id"] != event["kelurahan_id"]:
-              return write_json(self, 403, {"error": "Draft skala kelurahan harus disetujui Lurah area terkait"})
-          elif event["scope_type"] == "kecamatan":
-            if badge != "camat" or actor["kecamatan_id"] != event["kecamatan_id"]:
-              return write_json(self, 403, {"error": "Draft skala kecamatan harus disetujui Camat area terkait"})
-        approved = bool(body.get("approved"))
-        status = "published" if approved else "draft"
-        execute(
-          conn,
-          "UPDATE events SET status = ?, published_at = ?, updated_at = ? WHERE id = ?",
-          (status, utc_now_iso() if approved else None, utc_now_iso(), event_id),
-        )
-        log_audit(
-          conn,
-          actor["id"],
-          "event.approve" if approved else "event.reject",
-          "event",
-          event_id,
-          {"approved": approved},
-        )
-        create_notification(
-          conn,
-          event["created_by_user_id"],
-          "event.reviewed",
-          "Status kegiatan diperbarui",
-          f"Kegiatan '{event['title']}' {'disetujui dan dipublish' if approved else 'ditolak (kembali draft)'}",
-          "event",
-          event_id,
-        )
-        return write_json(self, 200, {"success": True})
-
-      if path.endswith("/join") and path.startswith(f"{API_PREFIX}/events/"):
-        event_id = path.split("/")[-2]
-        if actor["role_code"] not in ("user", "ksh"):
-          return write_json(self, 403, {"error": "Hanya relawan/KSH yang dapat mendaftar"})
-        pending = conn.execute(
-          """
-          SELECT COUNT(*) AS c
-          FROM event_participation ep
-          JOIN events e ON e.id = ep.event_id
-          WHERE ep.user_id = ? AND ep.status = 'attended' AND ep.checklist_done = 0 AND e.status = 'completed'
-          """,
-          (actor["id"],),
-        ).fetchone()["c"]
-        if pending > 0:
-          return write_json(self, 400, {"error": "Laporan event sebelumnya belum lengkap"})
-        event = conn.execute("SELECT * FROM events WHERE id = ?", (event_id,)).fetchone()
-        if not event or event["status"] != "published":
-          return write_json(self, 400, {"error": "Event belum dipublish"})
-        if int(event["quota"]) > 0:
-          count = conn.execute("SELECT COUNT(*) AS c FROM event_participation WHERE event_id = ?", (event_id,)).fetchone()["c"]
-          if count >= int(event["quota"]):
-            return write_json(self, 400, {"error": "Kuota penuh"})
-        execute(
-          conn,
-          """
-          INSERT OR IGNORE INTO event_participation(event_id, user_id, status, checklist_done, created_at, updated_at)
-          VALUES(?, ?, 'registered', 0, ?, ?)
-          """,
-          (event_id, actor["id"], utc_now_iso(), utc_now_iso()),
-        )
-        return write_json(self, 200, {"success": True})
-
-      if path.endswith("/attendance") and path.startswith(f"{API_PREFIX}/events/"):
-        event_id = path.split("/")[-2]
-        if not actor["is_ksh"]:
-          return write_json(self, 403, {"error": "Hanya KSH yang bisa mengatur kehadiran"})
-        event = conn.execute("SELECT * FROM events WHERE id = ?", (event_id,)).fetchone()
-        if not event:
-          return write_json(self, 404, {"error": "Event tidak ditemukan"})
-        if event["scope_type"] == "kelurahan" and event["kelurahan_id"] != actor["kelurahan_id"]:
-          return write_json(self, 403, {"error": "Event di luar kelurahan KSH"})
-        if event["scope_type"] == "kecamatan" and event["kecamatan_id"] != actor["kecamatan_id"]:
-          return write_json(self, 403, {"error": "Event di luar kecamatan KSH"})
-        if event["status"] not in ("published", "completed"):
-          return write_json(self, 400, {"error": "Checklist kehadiran hanya untuk event published/completed"})
-
-        user_ids = body.get("userIds", [])
-        if not isinstance(user_ids, list):
-          return write_json(self, 400, {"error": "userIds harus berbentuk array"})
-        selected_ids = []
-        seen = set()
-        for item in user_ids:
-          user_id = str(item).strip()
-          if user_id and user_id not in seen:
-            selected_ids.append(user_id)
-            seen.add(user_id)
-
-        registered_rows = conn.execute(
-          "SELECT user_id FROM event_participation WHERE event_id = ?",
-          (event_id,),
-        ).fetchall()
-        registered_ids = {row["user_id"] for row in registered_rows}
-        invalid_ids = [uid for uid in selected_ids if uid not in registered_ids]
-        if invalid_ids:
-          return write_json(self, 400, {"error": "Ada user yang bukan peserta event"})
-
-        now = utc_now_iso()
-        execute(
-          conn,
-          "UPDATE event_participation SET status = 'registered', updated_at = ? WHERE event_id = ? AND status IN ('registered','attended')",
-          (now, event_id),
-        )
-        if selected_ids:
-          placeholders = ",".join(["?"] * len(selected_ids))
-          execute(
-            conn,
-            f"UPDATE event_participation SET status = 'attended', updated_at = ? WHERE event_id = ? AND user_id IN ({placeholders}) AND status IN ('registered','attended')",
-            tuple([now, event_id, *selected_ids]),
-          )
-
-        log_audit(
-          conn,
-          actor["id"],
-          "event.attendance",
-          "event",
-          event_id,
-          {"attendedUserIds": selected_ids, "attendedCount": len(selected_ids)},
-        )
-        return write_json(self, 200, {"success": True, "attendedCount": len(selected_ids)})
-
-      if path.endswith("/complete") and path.startswith(f"{API_PREFIX}/events/"):
-        event_id = path.split("/")[-2]
-        if not actor["is_ksh"]:
-          return write_json(self, 403, {"error": "Hanya KSH yang bisa menandai selesai"})
-        event = conn.execute("SELECT * FROM events WHERE id = ?", (event_id,)).fetchone()
-        if not event:
-          return write_json(self, 404, {"error": "Event tidak ditemukan"})
-        if event["scope_type"] == "kelurahan" and event["kelurahan_id"] != actor["kelurahan_id"]:
-          return write_json(self, 403, {"error": "Event di luar kelurahan KSH"})
-        if event["scope_type"] == "kecamatan" and event["kecamatan_id"] != actor["kecamatan_id"]:
-          return write_json(self, 403, {"error": "Event di luar kecamatan KSH"})
-        if event["status"] != "published":
-          return write_json(self, 400, {"error": "Event harus published sebelum completed"})
-        summary = str(body.get("outputSummary", "")).strip()
-        if not summary:
-          return write_json(self, 400, {"error": "Output summary wajib diisi"})
-        now = utc_now_iso()
-        execute(
-          conn,
-          """
-          UPDATE events
-          SET status = 'completed', output_summary = ?, completed_at = ?, completed_by_user_id = ?, updated_at = ?
-          WHERE id = ?
-          """,
-          (summary, now, actor["id"], now, event_id),
-        )
-        log_audit(
-          conn,
-          actor["id"],
-          "event.complete",
-          "event",
-          event_id,
-          {"outputSummary": summary},
-        )
-        return write_json(self, 200, {"success": True})
-
-      if path == f"{API_PREFIX}/reports":
-        if actor["role_code"] not in ("user", "ksh"):
-          return write_json(self, 403, {"error": "Hanya relawan/KSH yang dapat lapor"})
-        event_id = body.get("eventId")
-        if not event_id:
-          return write_json(self, 400, {"error": "Event ID wajib diisi"})
-        event = conn.execute("SELECT * FROM events WHERE id = ?", (event_id,)).fetchone()
-        if not event or event["status"] != "completed":
-          return write_json(self, 400, {"error": "Laporan hanya setelah event selesai"})
-        part = conn.execute(
-          "SELECT * FROM event_participation WHERE event_id = ? AND user_id = ?",
-          (event_id, actor["id"]),
-        ).fetchone()
-        if not part:
-          return write_json(self, 400, {"error": "Relawan belum terdaftar pada event ini"})
-        if part["status"] != "attended":
-          return write_json(self, 400, {"error": "Laporan hanya bisa dikirim oleh peserta yang ditandai hadir"})
-        existing_report = conn.execute(
-          "SELECT id FROM event_reports WHERE event_id = ? AND user_id = ? LIMIT 1",
-          (event_id, actor["id"]),
-        ).fetchone()
-        if existing_report:
-          return write_json(self, 400, {"error": "Kamu sudah pernah mengirim laporan untuk event ini"})
-        try:
-          participants = int(body.get("participants", 1))
-        except Exception:
-          return write_json(self, 400, {"error": "Jumlah peserta harus angka"})
-        if participants < 1 or participants > 10000:
-          return write_json(self, 400, {"error": "Jumlah peserta harus 1-10000"})
-        outcome_tags = body.get("outcomeTags", [])
-        if not isinstance(outcome_tags, list):
-          return write_json(self, 400, {"error": "Outcome tags harus berbentuk array"})
-        if len(outcome_tags) > 20:
-          return write_json(self, 400, {"error": "Outcome tags maksimal 20 item"})
-        safe_tags = [bounded_text(tag, 60) for tag in outcome_tags]
-        photo_url = bounded_text(body.get("photoUrl", ""), 2_000_000)
-        report_id = f"report-{uuid.uuid4().hex[:12]}"
-        now = utc_now_iso()
-        execute(
-          conn,
-          """
-          INSERT INTO event_reports(
-            id, event_id, user_id, participants, checklist_json, outcome_tags_json, photo_url,
-            status, points_awarded, created_at, updated_at
-          )
-          VALUES(?, ?, ?, ?, ?, ?, ?, 'pending', 0, ?, ?)
-          """,
-          (
-            report_id,
-            event_id,
-            actor["id"],
-            participants,
-            json.dumps({"attendance": True, "post_event": True}),
-            json.dumps(safe_tags),
-            photo_url,
-            now,
-            now,
-          ),
-        )
-        execute(
-          conn,
-          "UPDATE event_participation SET status = 'reported', checklist_done = 1, updated_at = ? WHERE event_id = ? AND user_id = ?",
-          (now, event_id, actor["id"]),
-        )
-        log_audit(
-          conn,
-          actor["id"],
-          "report.submit",
-          "report",
-          report_id,
-          {"eventId": event_id, "participants": participants, "outcomeTags": safe_tags},
-        )
-        return write_json(self, 200, {"success": True, "report": {"id": report_id}})
-
-      if path.endswith("/verify") and path.startswith(f"{API_PREFIX}/reports/"):
-        if not can_verify_report(actor):
-          return write_json(self, 403, {"error": "Hanya Moderator Tier 2/Admin yang boleh verifikasi"})
-        report_id = path.split("/")[-2]
-        report = conn.execute("SELECT * FROM event_reports WHERE id = ?", (report_id,)).fetchone()
-        if not report:
-          return write_json(self, 404, {"error": "Report tidak ditemukan"})
-        if report["status"] != "pending":
-          return write_json(self, 400, {"error": "Report sudah diproses"})
-        approved = bool(body.get("approved"))
-        now = utc_now_iso()
-        if approved:
-          event = conn.execute("SELECT * FROM events WHERE id = ?", (report["event_id"],)).fetchone()
-          gained = apply_xp(conn, event, int(report["participants"]))
-          execute(
-            conn,
-            "UPDATE event_reports SET status = 'verified', points_awarded = ?, verified_by_user_id = ?, verified_at = ?, updated_at = ? WHERE id = ?",
-            (gained, actor["id"], now, now, report_id),
-          )
-          execute(conn, "UPDATE users SET points = points + 5, updated_at = ? WHERE id = ?", (now, report["user_id"]))
-          cert_id = f"cert-{uuid.uuid4().hex[:12]}"
-          cert_hash = hashlib.sha256(
-            f"{cert_id}:{report['user_id']}:{report['event_id']}:{now}".encode("utf-8")
-          ).hexdigest()[:16]
-          execute(
-            conn,
-            """
-            INSERT OR IGNORE INTO certificates(id, user_id, event_id, report_id, certificate_hash, issued_at)
-            VALUES(?, ?, ?, ?, ?, ?)
-            """,
-            (cert_id, report["user_id"], report["event_id"], report_id, cert_hash, now),
-          )
-          cert_row = conn.execute(
-            """
-            SELECT id, certificate_hash
-            FROM certificates
-            WHERE user_id = ? AND event_id = ?
-            LIMIT 1
-            """,
-            (report["user_id"], report["event_id"]),
-          ).fetchone()
-          create_notification(
-            conn,
-            report["user_id"],
-            "report.verified",
-            "Laporan disetujui",
-            f"Laporanmu disetujui. Kamu mendapat +{gained} XP kampung dan +5 poin pribadi.",
-            "report",
-            report_id,
-          )
-          if cert_row:
-            create_notification(
-              conn,
-              report["user_id"],
-              "certificate.issued",
-              "Sertifikat digital terbit",
-              f"Sertifikat untuk kegiatan ini terbit. Hash verifikasi: {cert_row['certificate_hash']}",
-              "certificate",
-              cert_row["id"],
-            )
-          log_audit(
-            conn,
-            actor["id"],
-            "report.verify",
-            "report",
-            report_id,
-            {"approved": True, "pointsAwarded": gained, "reporterId": report["user_id"]},
-          )
-        else:
-          reject_reason = bounded_text(body.get("reason", ""), 500)
-          if not reject_reason:
-            return write_json(self, 400, {"error": "Alasan penolakan wajib diisi"})
-          execute(
-            conn,
-            "UPDATE event_reports SET status = 'rejected', reject_reason = ?, verified_by_user_id = ?, verified_at = ?, updated_at = ? WHERE id = ?",
-            (reject_reason, actor["id"], now, now, report_id),
-          )
-          create_notification(
-            conn,
-            report["user_id"],
-            "report.rejected",
-            "Laporan ditolak",
-            f"Laporanmu ditolak. Alasan: {reject_reason}",
-            "report",
-            report_id,
-          )
-          log_audit(
-            conn,
-            actor["id"],
-            "report.reject",
-            "report",
-            report_id,
-            {"approved": False, "reason": reject_reason, "reporterId": report["user_id"]},
-          )
-        return write_json(self, 200, {"success": True})
-
-      if path == f"{API_PREFIX}/recommendations":
-        return write_json(self, 410, {"error": "ASN recommendation is off-system"})
-
-      if path == f"{API_PREFIX}/admin/assign-role":
-        if actor["role_code"] != "admin":
-          return write_json(self, 403, {"error": "Admin only"})
-        badge = str(body.get("tier2Badge", "lurah")).lower()
-        if badge not in ("lurah", "camat"):
-          badge = "lurah"
-        target_user_id = str(body.get("userId", "")).strip()
-        if not target_user_id:
-          return write_json(self, 400, {"error": "userId wajib diisi"})
-        execute(
-          conn,
-          "UPDATE users SET role_code = 'moderator_t2', moderator_tier = 2, tier2_badge = ?, updated_at = ? WHERE id = ?",
-          (badge, utc_now_iso(), target_user_id),
-        )
-        log_audit(
-          conn,
-          actor["id"],
-          "admin.assign-role",
-          "user",
-          target_user_id,
-          {"roleCode": "moderator_t2", "tier2Badge": badge},
-        )
-        return write_json(self, 200, {"success": True})
-
-      if path == f"{API_PREFIX}/admin/remove-role":
-        if actor["role_code"] != "admin":
-          return write_json(self, 403, {"error": "Admin only"})
-        target_user_id = str(body.get("userId", "")).strip()
-        if not target_user_id:
-          return write_json(self, 400, {"error": "userId wajib diisi"})
-        execute(
-          conn,
-          "UPDATE users SET role_code = 'user', moderator_tier = NULL, tier2_badge = NULL, updated_at = ? WHERE id = ?",
-          (utc_now_iso(), target_user_id),
-        )
-        log_audit(
-          conn,
-          actor["id"],
-          "admin.remove-role",
-          "user",
-          target_user_id,
-          {"roleCode": "user"},
-        )
-        return write_json(self, 200, {"success": True})
-
-      if path == f"{API_PREFIX}/admin/add-temporary-points":
-        if actor["role_code"] != "admin":
-          return write_json(self, 403, {"error": "Admin only"})
-        points = int(body.get("points", 0))
-        target_user_id = str(body.get("userId", "")).strip()
-        if not target_user_id:
-          return write_json(self, 400, {"error": "userId wajib diisi"})
-        if points < -500 or points > 500:
-          return write_json(self, 400, {"error": "Penyesuaian poin maksimal +/-500"})
-        now = utc_now_iso()
-        reason = bounded_text(body.get("reason", "admin points"), 300)
-        execute(conn, "UPDATE users SET points = points + ?, updated_at = ? WHERE id = ?", (points, now, target_user_id))
-        execute(
-          conn,
-          """
-          INSERT INTO temporary_adjustments(id, user_id, adjustment_type, value_json, reason, expires_at, created_at)
-          VALUES(?, ?, 'points', ?, ?, ?, ?)
-          """,
-          (
-            str(uuid.uuid4()),
-            target_user_id,
-            json.dumps({"points": points}),
-            reason,
-            (datetime.now(timezone.utc) + timedelta(hours=24)).isoformat(),
-            now,
-          ),
-        )
-        log_audit(
-          conn,
-          actor["id"],
-          "admin.add-temporary-points",
-          "user",
-          target_user_id,
-          {"points": points, "reason": reason},
-        )
-        return write_json(self, 200, {"success": True})
-
-      if path == f"{API_PREFIX}/admin/add-temporary-badge":
-        if actor["role_code"] != "admin":
-          return write_json(self, 403, {"error": "Admin only"})
-        target_id = str(body.get("userId", "")).strip()
-        badge_id = bounded_text(body.get("badgeId", ""), 80)
-        if not target_id:
-          return write_json(self, 400, {"error": "userId wajib diisi"})
-        if not badge_id:
-          return write_json(self, 400, {"error": "badgeId wajib diisi"})
-        user = conn.execute("SELECT badges_json FROM users WHERE id = ?", (target_id,)).fetchone()
-        if not user:
-          return write_json(self, 404, {"error": "User tidak ditemukan"})
-        badges = json.loads(user["badges_json"] or "[]")
-        badges.append({"id": badge_id, "temporary": True})
-        now = utc_now_iso()
-        reason = bounded_text(body.get("reason", "admin badge"), 300)
-        execute(conn, "UPDATE users SET badges_json = ?, updated_at = ? WHERE id = ?", (json.dumps(badges), now, target_id))
-        execute(
-          conn,
-          """
-          INSERT INTO temporary_adjustments(id, user_id, adjustment_type, value_json, reason, expires_at, created_at)
-          VALUES(?, ?, 'badge', ?, ?, ?, ?)
-          """,
-          (
-            str(uuid.uuid4()),
-            target_id,
-            json.dumps({"badgeId": badge_id}),
-            reason,
-            (datetime.now(timezone.utc) + timedelta(hours=24)).isoformat(),
-            now,
-          ),
-        )
-        log_audit(
-          conn,
-          actor["id"],
-          "admin.add-temporary-badge",
-          "user",
-          target_id,
-          {"badgeId": badge_id, "reason": reason},
-        )
-        return write_json(self, 200, {"success": True})
+      if users_api.handle_post(self, conn, path, body, users_dependencies()):
+        return
 
       return write_json(self, 404, {"error": "Not found"})
     except ValueError as exc:
@@ -2557,15 +1508,11 @@ class Handler(BaseHTTPRequestHandler):
       path = urlparse(self.path).path
       if rate_limited(self, "mutation", RATE_LIMIT_MUTATION_MAX, RATE_LIMIT_WINDOW_SECONDS):
         return write_json(self, 429, {"error": "Terlalu banyak permintaan, coba lagi sebentar"})
+      if auth_api.handle_delete(self, conn, path, auth_dependencies()):
+        return
       actor = user_from_token(conn, self.headers.get("Authorization"))
       if not actor:
         return write_json(self, 401, {"error": "Unauthorized"})
-      # DELETE /auth/logout alias
-      if path == f"{API_PREFIX}/auth/logout":
-        auth = self.headers.get("Authorization")
-        token_val = auth.split(" ", 1)[1].strip()
-        execute(conn, "DELETE FROM sessions WHERE token = ?", (token_val,))
-        return write_json(self, 200, {"success": True})
       return write_json(self, 404, {"error": "Not found"})
     except Exception as exc:
       print(f"[DELETE] error path={self.path}: {exc}")
@@ -2585,137 +1532,15 @@ class Handler(BaseHTTPRequestHandler):
       actor = user_from_token(conn, self.headers.get("Authorization"))
       if not actor:
         return write_json(self, 401, {"error": "Unauthorized"})
-      if path.startswith(f"{API_PREFIX}/users/"):
-        user_id = path.split("/")[-1]
-        body = parse_json_body(self)
-        if actor["id"] != user_id and actor["role_code"] != "admin":
-          return write_json(self, 403, {"error": "Forbidden"})
-        fields = []
-        params = []
-        for key in ("name", "rw", "nik"):
-          if key in body and body[key] is not None:
-            fields.append(f"{key} = ?")
-            max_len = 120 if key == "name" else (16 if key == "rw" else 32)
-            params.append(bounded_text(body[key], max_len))
-        if not fields:
-          return write_json(self, 400, {"error": "No fields"})
-        fields.append("updated_at = ?")
-        params.append(utc_now_iso())
-        params.append(user_id)
-        execute(conn, f"UPDATE users SET {', '.join(fields)} WHERE id = ?", tuple(params))
-        row = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
-        return write_json(self, 200, {"success": True, "user": get_user_payload(conn, row)})
 
-      if path.startswith(f"{API_PREFIX}/events/") and not path.endswith("/"):
-        event_id = path.split("/")[-1]
-        event = conn.execute("SELECT * FROM events WHERE id = ?", (event_id,)).fetchone()
-        if not event:
-          return write_json(self, 404, {"error": "Event tidak ditemukan"})
-        if event["status"] != "draft":
-          return write_json(self, 400, {"error": "Hanya event draft yang bisa diedit"})
-        if event["created_by_user_id"] != actor["id"] and actor["role_code"] != "admin":
-          return write_json(self, 403, {"error": "Hanya pembuat event yang bisa edit"})
-        body = parse_json_body(self)
+      body = parse_json_body(self)
 
-        title = bounded_text(body.get("title", event["title"]), 200)
-        description = bounded_text(body.get("description", event["description"] or ""), 3000)
-        date = str(body.get("date", event["event_date"])).strip()
-        event_time = bounded_text(body.get("time", event["event_time"] or ""), 16)
-        location = bounded_text(body.get("location", event["location"] or ""), 220)
-        scope_type = str(body.get("scopeType", event["scope_type"])).strip().lower()
-        if not title or not date:
-          return write_json(self, 400, {"error": "Judul dan tanggal wajib diisi"})
-        if scope_type not in ("kelurahan", "kecamatan"):
-          return write_json(self, 400, {"error": "Skala kegiatan harus kelurahan atau kecamatan"})
+      if events_api.handle_put(self, conn, path, body, events_dependencies()):
+        return
 
-        if "pillar" in body:
-          try:
-            pillar = int(body.get("pillar", event["pillar"]))
-          except Exception:
-            return write_json(self, 400, {"error": "Pilar harus angka"})
-        else:
-          pillar = int(event["pillar"])
-        if pillar not in (1, 2, 3, 4):
-          return write_json(self, 400, {"error": "Pilar harus 1-4"})
+      if users_api.handle_put(self, conn, path, body, actor, users_dependencies()):
+        return
 
-        if "quota" in body:
-          try:
-            quota = int(body.get("quota", event["quota"]))
-          except Exception:
-            return write_json(self, 400, {"error": "Kuota harus angka"})
-        else:
-          quota = int(event["quota"])
-        if quota < 0 or quota > 10000:
-          return write_json(self, 400, {"error": "Kuota harus 0-10000"})
-
-        if "kecamatanId" in body:
-          try:
-            kecamatan_id = int(body.get("kecamatanId"))
-          except Exception:
-            return write_json(self, 400, {"error": "Kecamatan wajib dipilih"})
-        else:
-          kecamatan_id = int(event["kecamatan_id"])
-
-        if scope_type == "kelurahan":
-          if "kelurahanId" in body:
-            try:
-              kelurahan_id = int(body.get("kelurahanId"))
-            except Exception:
-              return write_json(self, 400, {"error": "Untuk skala kelurahan, kelurahan wajib dipilih"})
-          else:
-            if event["kelurahan_id"] is None:
-              return write_json(self, 400, {"error": "Untuk skala kelurahan, kelurahan wajib dipilih"})
-            kelurahan_id = int(event["kelurahan_id"])
-          check = conn.execute(
-            "SELECT id FROM kelurahan WHERE id = ? AND kecamatan_id = ?",
-            (kelurahan_id, kecamatan_id),
-          ).fetchone()
-          if not check:
-            return write_json(self, 400, {"error": "Kelurahan tidak cocok dengan kecamatan pilihan"})
-        else:
-          kelurahan_id = None
-          kec_exists = conn.execute("SELECT id FROM kecamatan WHERE id = ?", (kecamatan_id,)).fetchone()
-          if not kec_exists:
-            return write_json(self, 400, {"error": "Kecamatan tidak ditemukan"})
-
-        now = utc_now_iso()
-        execute(
-          conn,
-          """
-          UPDATE events
-          SET title = ?, description = ?, pillar = ?, event_date = ?, event_time = ?, location = ?,
-              quota = ?, scope_type = ?, kecamatan_id = ?, kelurahan_id = ?, updated_at = ?
-          WHERE id = ?
-          """,
-          (
-            title,
-            description,
-            pillar,
-            date,
-            event_time,
-            location,
-            quota,
-            scope_type,
-            kecamatan_id,
-            kelurahan_id,
-            now,
-            event_id,
-          ),
-        )
-        log_audit(
-          conn,
-          actor["id"],
-          "event.edit",
-          "event",
-          event_id,
-          {
-            "title": title,
-            "scopeType": scope_type,
-            "kecamatanId": kecamatan_id,
-            "kelurahanId": kelurahan_id,
-          },
-        )
-        return write_json(self, 200, {"success": True, "event": {"id": event_id}})
       return write_json(self, 404, {"error": "Not found"})
     except ValueError as exc:
       return write_json(self, 400, {"error": str(exc)})
@@ -2731,6 +1556,7 @@ class Handler(BaseHTTPRequestHandler):
 
 def main():
   init_schema()
+  write_dev_credentials_file()
   display_host = "127.0.0.1" if HOST in ("0.0.0.0", "::") else HOST
   print(f"SIMRP API: http://{display_host}:{PORT}{API_PREFIX}")
   print(f"Bind: {HOST}:{PORT}")

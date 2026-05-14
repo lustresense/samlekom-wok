@@ -18,6 +18,44 @@ DB_DIR = ROOT_DIR / "database"
 DB_PATH = Path(os.environ.get("SIMRP_DB_PATH", str(DB_DIR / "runtime" / "database.db")))
 GEO_PATH = ROOT_DIR / "src" / "data" / "geographicData.ts"
 API_PREFIX = "/make-server-32aa5c5c"
+DEV_CREDENTIALS_PATH = DB_PATH.parent / "dev_credentials.txt"
+_DEV_CREDENTIAL_NOTES = []
+
+
+def generate_runtime_secret():
+  return secrets.token_urlsafe(24)
+
+
+def record_dev_credential(label, identifier, env_name, secret):
+  if IS_PRODUCTION:
+    return
+  _DEV_CREDENTIAL_NOTES.append({
+    "label": label,
+    "identifier": identifier,
+    "env_name": env_name,
+    "secret": secret,
+  })
+
+
+def write_dev_credentials_file():
+  if IS_PRODUCTION or not _DEV_CREDENTIAL_NOTES:
+    return
+  lines = [
+    "SIMRP local development credentials",
+    "Generated because one or more demo credential environment variables were not set.",
+    "This file is under database/runtime/ and must stay ignored by Git.",
+    "",
+  ]
+  for item in _DEV_CREDENTIAL_NOTES:
+    lines.extend([
+      f"[{item['label']}]",
+      item["identifier"],
+      f"{item['env_name']}={item['secret']}",
+      "",
+    ])
+  DEV_CREDENTIALS_PATH.parent.mkdir(parents=True, exist_ok=True)
+  DEV_CREDENTIALS_PATH.write_text("\n".join(lines), encoding="utf-8")
+  print(f"[SECURITY] Local development credentials file: {DEV_CREDENTIALS_PATH}")
 
 APP_ENV = str(os.environ.get("SIMRP_ENV", "development")).strip().lower()
 IS_PRODUCTION = APP_ENV in ("prod", "production")
@@ -37,6 +75,22 @@ ALLOWED_ORIGINS = {item.strip() for item in raw_allowed_origins.split(",") if it
 
 ADMIN_LOGIN_USERNAME = str(os.environ.get("SIMRP_ADMIN_LOGIN_USERNAME", "")).strip()
 ADMIN_LOGIN_PASSWORD = str(os.environ.get("SIMRP_ADMIN_LOGIN_PASSWORD", "")).strip()
+DEMO_PASSWORD = str(os.environ.get("SIMRP_DEMO_PASSWORD", "")).strip()
+if not ADMIN_LOGIN_USERNAME and not IS_PRODUCTION:
+  ADMIN_LOGIN_USERNAME = "admin"
+if not ADMIN_LOGIN_PASSWORD and not IS_PRODUCTION:
+  ADMIN_LOGIN_PASSWORD = generate_runtime_secret()
+  record_dev_credential("Admin portal", f"username={ADMIN_LOGIN_USERNAME}", "SIMRP_ADMIN_LOGIN_PASSWORD", ADMIN_LOGIN_PASSWORD)
+if not DEMO_PASSWORD:
+  if IS_PRODUCTION:
+    raise RuntimeError("SIMRP_DEMO_PASSWORD is required for demo seed in production")
+  DEMO_PASSWORD = generate_runtime_secret()
+  record_dev_credential(
+    "Demo user accounts",
+    "emails=relawan.demo@simrp.app, moderator1.demo@simrp.app, ksh.demo@simrp.app, ...",
+    "SIMRP_DEMO_PASSWORD",
+    DEMO_PASSWORD,
+  )
 
 _rate_lock = threading.Lock()
 _rate_hits = {}
@@ -764,19 +818,19 @@ def insert_user(conn, name, email, password, role_code, *, is_ksh=0, tier=None, 
 def seed_demo(conn):
   admin_seed_password = str(os.environ.get("SIMRP_SEED_ADMIN_PASSWORD", "")).strip()
   if not admin_seed_password:
-    admin_seed_password = "admin" if not IS_PRODUCTION else secrets.token_urlsafe(18)
     if IS_PRODUCTION:
-      print("[SECURITY] Generated random seed admin password via SIMRP_SEED_ADMIN_PASSWORD")
-      print(f"[SECURITY] Seed admin password (save securely): {admin_seed_password}")
+      raise RuntimeError("SIMRP_SEED_ADMIN_PASSWORD is required for demo seed in production")
+    admin_seed_password = generate_runtime_secret()
+    record_dev_credential("Seed admin account", "email=admin@simrp.local", "SIMRP_SEED_ADMIN_PASSWORD", admin_seed_password)
   insert_user(conn, "Administrator", "admin@simrp.local", admin_seed_password, "admin", kelurahan_name="Keputih")
-  insert_user(conn, "Andi Relawan", "relawan.demo@simrp.app", "password123", "user", kelurahan_name="Bulak")
-  insert_user(conn, "Nia Relawan", "relawan2.demo@simrp.app", "password123", "user", kelurahan_name="Keputih")
-  insert_user(conn, "Budi Relawan", "relawan3.demo@simrp.app", "password123", "user", kelurahan_name="Wonorejo")
-  insert_user(conn, "Kak Esa", "ksh.demo@simrp.app", "password123", "ksh", is_ksh=1, kelurahan_name="Keputih")
-  insert_user(conn, "Pak Raka ASN", "moderator1.demo@simrp.app", "password123", "moderator_t1", tier=1, kelurahan_name="Keputih")
-  insert_user(conn, "Bu Sinta Lurah", "moderator2.demo@simrp.app", "password123", "moderator_t2", tier=2, tier2_badge="lurah", kelurahan_name="Keputih")
-  insert_user(conn, "Pak Dimas Camat", "moderator2.camat@simrp.app", "password123", "moderator_t2", tier=2, tier2_badge="camat", kelurahan_name="Keputih")
-  insert_user(conn, "Pak Arif", "moderator3.demo@simrp.app", "password123", "moderator_t3", tier=3, kelurahan_name="Keputih")
+  insert_user(conn, "Andi Relawan", "relawan.demo@simrp.app", DEMO_PASSWORD, "user", kelurahan_name="Bulak")
+  insert_user(conn, "Nia Relawan", "relawan2.demo@simrp.app", DEMO_PASSWORD, "user", kelurahan_name="Keputih")
+  insert_user(conn, "Budi Relawan", "relawan3.demo@simrp.app", DEMO_PASSWORD, "user", kelurahan_name="Wonorejo")
+  insert_user(conn, "Kak Esa", "ksh.demo@simrp.app", DEMO_PASSWORD, "ksh", is_ksh=1, kelurahan_name="Keputih")
+  insert_user(conn, "Pak Raka ASN", "moderator1.demo@simrp.app", DEMO_PASSWORD, "moderator_t1", tier=1, kelurahan_name="Keputih")
+  insert_user(conn, "Bu Sinta Lurah", "moderator2.demo@simrp.app", DEMO_PASSWORD, "moderator_t2", tier=2, tier2_badge="lurah", kelurahan_name="Keputih")
+  insert_user(conn, "Pak Dimas Camat", "moderator2.camat@simrp.app", DEMO_PASSWORD, "moderator_t2", tier=2, tier2_badge="camat", kelurahan_name="Keputih")
+  insert_user(conn, "Pak Arif", "moderator3.demo@simrp.app", DEMO_PASSWORD, "moderator_t3", tier=3, kelurahan_name="Keputih")
   execute(
     conn,
     "UPDATE users SET tier2_badge = 'lurah' WHERE role_code = 'moderator_t2' AND (tier2_badge IS NULL OR tier2_badge = '')",
@@ -1381,12 +1435,12 @@ class Handler(BaseHTTPRequestHandler):
       if path == f"{API_PREFIX}/auth/admin-login":
         if rate_limited(self, "auth-admin-login", RATE_LIMIT_AUTH_MAX, RATE_LIMIT_WINDOW_SECONDS):
           return write_json(self, 429, {"error": "Terlalu banyak percobaan login admin, coba lagi nanti"})
-        if IS_PRODUCTION and (not ADMIN_LOGIN_USERNAME or not ADMIN_LOGIN_PASSWORD):
-          return write_json(self, 403, {"error": "Admin login tidak dikonfigurasi untuk production"})
+        if not ADMIN_LOGIN_USERNAME or not ADMIN_LOGIN_PASSWORD:
+          return write_json(self, 403, {"error": "Admin login tidak dikonfigurasi"})
         username = str(body.get("username", "")).strip()
         password = str(body.get("password", ""))
-        expected_username = ADMIN_LOGIN_USERNAME if ADMIN_LOGIN_USERNAME else "admin"
-        expected_password = ADMIN_LOGIN_PASSWORD if ADMIN_LOGIN_PASSWORD else "admin"
+        expected_username = ADMIN_LOGIN_USERNAME
+        expected_password = ADMIN_LOGIN_PASSWORD
         valid_user = hmac.compare_digest(username, expected_username)
         valid_pass = hmac.compare_digest(password, expected_password)
         if not valid_user or not valid_pass:
@@ -1900,6 +1954,7 @@ class Handler(BaseHTTPRequestHandler):
 
 def main():
   init_schema()
+  write_dev_credentials_file()
   print(f"Local SIMRP API: http://127.0.0.1:8001{API_PREFIX}")
   print(f"DB: {DB_PATH}")
   server = ThreadingHTTPServer(("127.0.0.1", 8001), Handler)

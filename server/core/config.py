@@ -35,7 +35,7 @@ ALLOWED_ORIGINS = {item.strip() for item in raw_allowed_origins.split(",") if it
 
 # Admin
 ADMIN_LOGIN_USERNAME = str(os.environ.get("SIMRP_ADMIN_LOGIN_USERNAME", "")).strip()
-ADMIN_LOGIN_PASSWORD = str(os.environ.get("SIMRP_ADMIN_PASSWORD", "")).strip()
+ADMIN_LOGIN_PASSWORD = str(os.environ.get("SIMRP_ADMIN_LOGIN_PASSWORD", "")).strip()
 SEED_ADMIN_PASSWORD = str(os.environ.get("SIMRP_SEED_ADMIN_PASSWORD", "")).strip()
 
 # Validation

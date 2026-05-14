@@ -318,7 +318,7 @@ export function LoginPage({ onNavigate, onLogin }: LoginPageProps) {
                     </code>
                   </p>
                   <p>
-                    Pass: <code className="px-1 rounded" style={{ backgroundColor: `${theme.primary}1A` }}>password123</code>
+                    Pass: <code className="px-1 rounded" style={{ backgroundColor: `${theme.primary}1A` }}>database/runtime/dev_credentials.txt</code>
                   </p>
                 </div>
               </div>

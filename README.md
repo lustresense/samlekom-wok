@@ -1,169 +1,299 @@
-# 🚀 SIMRP - Sistem Informasi Manajemen Rekap Partisipatif
+# SIMRP - Sistem Informasi Manajemen Rekap Partisipatif
 
-<div align="center">
-  <img src="./src/assets/logos/logo.svg" alt="SIMRP Logo" width="120" />
-</div>
+SIMRP adalah aplikasi partisipasi warga berbasis React + Vite, Python native HTTP server, dan SQLite. Project ini dipakai untuk alur relawan/KSH, moderator, admin, kegiatan kampung, laporan kegiatan, XP/leaderboard, sertifikat, reward voucher, notifikasi, dan kolaborasi mitra.
 
-<p align="center">
-  <b>Platform digital cerdas berbasis gamifikasi untuk kolaborasi warga dan pemerintah Kota Surabaya.</b>
-</p>
+Status saat ini: backend sudah partial modular. Banyak endpoint runtime sudah pindah ke `server/api/*`, tetapi `server/main.py` masih menjadi entrypoint utama dan masih memegang banyak logic non-route.
 
----
+## Status Project Saat Ini
 
-## 📑 Daftar Isi
+- Frontend: React 18 + Vite 6 + TypeScript-style TSX components.
+- Backend: Python stdlib `http.server.ThreadingHTTPServer`, tanpa Flask/FastAPI/Django.
+- Database: SQLite di `database/runtime/database.db` secara default.
+- Runtime utama: `server/main.py`.
+- Ukuran `server/main.py` saat ini sekitar 1570 baris.
+- API prefix runtime: `/make-server-32aa5c5c`.
+- Branch kerja lokal saat README ini diperbarui: `update`.
+- Remote deploy yang relevan: `https://github.com/lustresense/samlekom-wok.git`.
 
-1. [Latar Belakang & Visi](#-latar-belakang--visi)
-2. [Fitur & Modul Utama](#-fitur--modul-utama)
-3. [Hierarki Moderasi (Multi-Tier)](#%EF%B8%8F-hierarki-moderasi-multi-tier)
-4. [Alur Sistem (User Flow)](#-alur-sistem-user-flow)
-5. [Arsitektur Backend (Native Python)](#%EF%B8%8F-arsitektur-backend-native-python)
-6. [Arsitektur Database (SQLite3)](#%EF%B8%8F-arsitektur-database-sqlite3)
-7. [Keamanan & Enkripsi (Security)](#-keamanan--enkripsi-security)
-8. [Arsitektur Frontend (React + Vite)](#%EF%B8%8F-arsitektur-frontend-react--vite)
-9. [Struktur API Endpoints](#-struktur-api-endpoints)
-10. [Panduan Mulai Cepat (Quickstart)](#-panduan-mulai-cepat-quickstart)
-11. [Checklist Deployment Production](#-checklist-deployment-production)
+## Arsitektur Ringkas
 
----
+```text
+server/
+  main.py              Runtime utama HTTP server
+  main_test.py         Copy/test backend lama
+  api/
+    auth.py            Auth, signup, login, admin-login, logout
+    events.py          Event create/edit/approve/publish/join/attendance/complete
+    reports.py         Report submit/review/verify/reject, XP, certificate trigger
+    collaboration.py   Public mitra request dan approval moderator/admin
+    geographic.py      Geo options, kodepos, kampung, pillar XP
+    admin.py           Admin role dan temporary adjustment
+    notifications.py   Notification list/count/read
+    certificates.py    Certificate list/verify/download HTML
+    rewards.py         Reward catalog dan voucher redeem
+    users.py           Users, health, participations, landing leaderboard
+    xp.py              Legacy/partial leaderboard module
+    rate_limiter.py    Legacy/support rate limiter
+  core/
+    config.py
+    database.py
+    security.py
 
-## 📝 Latar Belakang & Visi
+src/
+  app/App.tsx
+  app/components/
+    UserDashboard.tsx
+    ModeratorDashboard.tsx
+    AdminDashboard.tsx
+    ReportingWizard.tsx
+    EventList.tsx
+    UserProfile.tsx
+    PillarRadarChart.tsx
+    ui/
+    landing/
+  lib/api.ts
+  types/index.ts
+  data/
+```
 
-**SIMRP** adalah manifestasi dari visi "Surabaya Hebat" yang mengedepankan sinergi tingkat bawah (grassroots) antara warga, Kader Surabaya Hebat (KSH), dan pemangku kebijakan. Sistem ini **tidak dibangun dengan *framework* *bloated***, melainkan dirancang khusus secara *native* agar sangat efisien, tangguh, dan dapat dijalankan di infrastruktur *on-premise* dengan konsumsi sumber daya seminimal mungkin tanpa mengorbankan keamanan.
+## Kondisi Backend
 
----
+`server/main.py` masih memegang:
 
-## ✨ Fitur & Modul Utama
+- konfigurasi env dan path runtime;
+- koneksi SQLite dan wrapper `execute`;
+- schema/init DB;
+- migration;
+- seed geography/demo data;
+- auth/session helper;
+- response/json helper;
+- RBAC helper;
+- audit log helper;
+- notification helper;
+- XP calculation;
+- geography parser dari `src/data/geographicData.ts`;
+- dependency dictionary untuk modul API;
+- lifecycle `BaseHTTPRequestHandler`.
 
-- **Gamifikasi Partisipasi & Radar Chart**: Warga mendapatkan XP (*Experience Points*) setiap kali menyelesaikan dan melaporkan kegiatan gotong royong. Poin ini dibagi ke dalam **4 Pilar Utama** (Lingkungan, Sosial, Ekonomi, Kesehatan) yang divisualisasikan secara interaktif menggunakan *Recharts* dalam wujud Radar Chart personal.
-- **Pencapaian (Badges System)**: Algoritma *backend* akan menganalisa distribusi pilar XP dan memberikan gelar/badge otomatis secara *real-time* (contoh: *Eco Champion*, *KSH Verified*).
-- **Ruang Kolaborasi (Crowdsourcing)**: Warga dapat memprakarsai kegiatan (Proposal Acara Warga). Jika *upvote* dari masyarakat tinggi, sistem otomatis meneruskan *draft* tersebut ke tingkat kecamatan untuk ditinjau pendanaannya.
-- **Voucher & Reward Catalog**: Sistem inventori berbasis *Redemption* untuk menukarkan *Points* warga dengan insentif nyata dari pemerintah kota.
+Target refactor berikutnya adalah modularisasi backend lanjutan supaya `server/main.py` turun bertahap menjadi entrypoint tipis sekitar 200-300 baris.
 
----
+Prioritas refactor berikutnya:
 
-## ⚖️ Hierarki Moderasi (Multi-Tier)
+1. Extract pure helpers dari `server/main.py` ke `server/core/*`.
+2. Extract schema, migration, dan seed ke `server/db/*`.
+3. Extract service logic ke `server/services/*`.
+4. Kurangi dependency dictionary di `server/main.py`.
+5. Bersihkan duplicate/dead code setelah usage dicek dengan search.
+6. Validasi final backend dengan `py_compile` dan smoke test endpoint utama.
 
-Sistem *Role-Based Access Control (RBAC)* SIMRP sangat granular dan disesuaikan dengan hierarki Pemkot Surabaya:
+## Fitur Aktif
 
-| Role Code | Nama Peran | Hak Akses & Yurisdiksi |
-| :--- | :--- | :--- |
-| `user` | **Relawan Biasa** | Akses publik dasar. Hanya dapat *join* acara, *submit* laporan partisipasi (foto), dan melihat *Leaderboard*. |
-| `ksh` | **Kader Surabaya Hebat**| Diverifikasi secara khusus. Dapat membuat inisiatif/draft acara di skala *Kelurahan*. |
-| `moderator_t1`| **Moderator RW / Lurah** | Melakukan verifikasi *Tier 1* atas laporan warga di kelurahan yurisdiksinya. |
-| `moderator_t2`| **Moderator Camat** | Menyetujui *publish* event skala *Kecamatan* dan memvalidasi pendanaan/kolaborasi eksternal. |
-| `moderator_t3`| **Moderator Pemkot** | Akses ke dasbor analitik global tingkat Kota Surabaya. |
-| `admin` | **Super Administrator**| Portal *God-Mode* rahasia untuk Seed DB, Manajemen Voucher, dan Audit Log transaksi sistem. |
+- Auth user: signup, login, logout, session token.
+- Admin login terpisah via credential env.
+- RBAC user, KSH, moderator tier, admin.
+- Event flow: draft, approval, publish, join, attendance checklist, complete.
+- Report flow: submit, under review, verify/reject.
+- XP kampung dan XP pillar.
+- Leaderboard landing dan leaderboard kampung.
+- Collaboration/mitra request dan approval.
+- In-app notifications.
+- Certificate record, public verify, dan HTML download untuk print/PDF.
+- Reward catalog dan voucher redemption.
+- Admin temporary points/badges dan role assignment.
+- Backup database helper.
+- Smoke test script untuk API lokal.
 
----
+## API Runtime Aktual
 
-## 🔄 Alur Sistem (User Flow)
+Base URL default:
 
-1. **Registrasi Auto-Mapping**: Pengguna cukup mendaftar dengan memasukkan kode pos. Modul geografis (`/geographic/*`) otomatis mencari irisan kelurahan dan kecamatan secara presisi dari relasi *Database* 3NF statik (`geographicData.ts`).
-2. **Penemuan Acara**: Pengguna dapat melihat daftar *Event* terdekat berdasarkan yurisdiksi domisilinya. Data disaring dinamis menurut 4 Pilar.
-3. **Validasi Pelaksanaan**: Pengguna menekan tombol "Hadir". Saat kegiatan selesai, warga melaporkan partisipasi dengan *upload* foto bukti fisik (diproses lewat *Base64 string*) dan sistem menangkap lokasi GPS secara lokal.
-4. **Verifikasi Berjenjang**: Moderator di *dashboard*-nya mengecek, lalu menyetujui (*Approve*) atau menolak (*Reject*) laporan tersebut (yang disertai alasan penolakan).
-5. **Kalkulasi Reward**: Jika disetujui, modul `xp.py` akan langsung mengeksekusi penambahan XP Kelurahan, XP Pilar Individu, dan *Points* penukaran warga.
+```text
+http://127.0.0.1:8000/make-server-32aa5c5c
+```
 
----
+Endpoint utama:
 
-## ⚙️ Arsitektur Backend (Native Python)
+| Area | Endpoint |
+|---|---|
+| Health | `GET /health` |
+| Auth | `GET /auth/me`, `POST /auth/signup`, `POST /auth/login`, `POST /auth/admin-login`, `POST /auth/logout`, `DELETE /auth/logout` |
+| Users | `GET /users`, `PUT /users/{id}`, `GET /users/me/participations` |
+| Events | `GET /events`, `POST /events`, `PUT /events/{id}`, `POST /events/{id}/approval`, `POST /events/{id}/publish`, `POST /events/{id}/join`, `POST /events/{id}/attendance`, `POST /events/{id}/complete` |
+| Reports | `GET /reports`, `POST /reports`, `POST /reports/{id}/review`, `POST /reports/{id}/verify` |
+| Collaboration | `GET /collaboration-requests`, `POST /collaboration-requests`, `POST /collaboration-requests/{id}/approval` |
+| Notifications | `GET /notifications/count`, `GET /notifications`, `POST /notifications/{id}/read` |
+| Certificates | `GET /certificates`, `GET /certificates/{id}/verify`, `GET /certificates/{id}/download` |
+| Rewards | `GET /rewards/catalog`, `POST /rewards/redeem` |
+| Geographic | `GET /geo/options`, `GET /geo/stats`, `GET /kodepos/{code}` |
+| Kampung/XP | `GET /landing/leaderboard`, `GET /kampung`, `GET /kampung/{id}/pillars` |
+| Recommendations | `GET /recommendations`, `POST /recommendations` return 410/off-system |
 
-Untuk menjamin performa *Cold-Boot* kilat dan independensi tinggi di server *on-premise*, backend ini **sama sekali tidak menggunakan framework** pihak ketiga seperti Django, Flask, atau FastAPI. 
+## Database
 
-Inti server HTTP ada di `server/main.py` (~2700 baris kode murni) yang memperluas `http.server.ThreadingHTTPServer`.
+Default DB path:
 
-- **Modular Native Routing**: *Router* HTTP memecah request berdasarkan *path URL* ke spesifik modul fungsional di `server/api/`:
-  - `auth.py`: Autentikasi dan Manajer *Session Token*.
-  - `events.py`: Siklus hidup pembuatan kegiatan dan agregasi laporan publik.
-  - `reports.py`: Penerimaan data form, pengolahan gambar *base64*, dan kontrol status laporan.
-  - `admin.py`: Penanganan pergerakan admin darurat, termasuk auto-migration DB.
-  - `rate_limiter.py`: In-memory *Sliding Window Bucket* anti-spam & proteksi *brute-force*.
-- **Custom Middleware**: Parser JSON kustom membatasi ukuran *payload* (*MAX_BODY_BYTES*) untuk mencegah serangan DoS (Denial of Service).
+```text
+database/runtime/database.db
+```
 
----
-
-## 🗄️ Arsitektur Database (SQLite3)
-
-SIMRP membuang ketergantungan *setup* PostgreSQL/MySQL yang berat. Backend mengeksploitasi **SQLite3 WAL Mode (Write-Ahead Logging)** yang terkonfigurasi dengan pragma optimasi konkurensi, memungkinkan operasi *Thread-Locking* yang aman (*Thread-Safe*) dan sepenuhnya *ACID-compliant*.
-
-Struktur *Schema Entity* (*Auto-Migrated on boot*):
-- `users`, `roles`, `sessions` untuk Auth.
-- `kecamatan`, `kelurahan`, `postal_codes`, `kampung_mapping` untuk relasi pemetaan Geografis yang ketat.
-- `events`, `event_participation`, `event_reports` untuk mengikat warga dengan acara mereka.
-- `xp_kelurahan`, `xp_pillar` untuk agregasi data papan klasemen (*Leaderboard*) super cepat.
-- `audit_logs` untuk mencatat log audit permanen (siapa, merubah apa, dan kapan).
-
----
-
-## 🔒 Keamanan & Enkripsi (Security)
-
-- **Native PBKDF2 HMAC**: *Hashing* sandi warga dilakukan murni dengan algoritma HMAC-SHA256 (`pbkdf2_hmac`). Menggunakan iterasi minimum `210000` di tingkat *Development* dan siap diskalakan di atas `600000` via *environment variable* `SIMRP_PBKDF2_ITERATIONS` untuk produksi.
-- **Session-based JWT-less**: Menolak kelemahan token JWT yang tidak dapat ditarik (*revoked*) secara instan. Menggunakan Token Hex 48-byte acak aman yang harus tervalidasi ke tabel memori `sessions` dengan *TTL (Time-To-Live)* ketat.
-- **Rate Limiting Engine**: Perlindungan absolut di API level (terutama pada `/auth/*`) berbasis IP *Client* untuk mencegah eksploitasi skrip otomatis.
-- **CSP & CORS**: Disertai penerapan *Strict-Transport-Security (HSTS)*, perlindungan *X-Frame-Options*, dan validasi asal *Cross-Origin Resource Sharing* eksplisit via variabel lingkungan `SIMRP_ALLOWED_ORIGINS`.
-
----
-
-## 🖥️ Arsitektur Frontend (React + Vite)
-
-Aplikasi klien (*Frontend*) dibangun dengan standar struktur *Enterprise-Grade*:
-- **Core Stack**: React 18, Vite 6, TypeScript yang sangat efisien.
-- **Styling Sistem**: *Tailwind CSS V4* dikolaborasikan sempurna dengan ribuan komponen UI dari ekosistem `shadcn/ui` (Radix Primitives) yang dikustomisasi di direktori `src/app/components/ui/`. Termasuk pemisahan cerdas antara `DesktopNavbar.tsx` dan `MobileNavbar.tsx`.
-- **Motion & Animasi**: Pemanfaatan *Framer Motion* (`motion`) untuk micro-interaction interaktif dan transisi mulus *POV Switcher* (peralihan dasbor antara `UserDashboard`, `ModeratorDashboard`, `AdminDashboard`).
-- **Validasi Mutlak**: Mengawinkan `react-hook-form` dengan validasi skema `zod` di sisi klien sebelum divalidasi ulang oleh Python backend.
-- **Data Visualizer**: Penggunaan `recharts` secara *deep-level* pada komponen `LevelProgressionCard.tsx` dan `PillarRadarChart.tsx` untuk visualisasi performa relawan kota.
-
----
-
-## 🔌 Struktur API Endpoints
-
-Semua modul bersandar pada URI utama `/make-server-32aa5c5c`:
-
-- **Auth** (`POST /auth/login`, `POST /auth/signup`, `GET /auth/me`): Pintu gerbang sesi.
-- **Events** (`GET /events`, `POST /events/join`, `PUT /events/:id/status`): Sinkronisasi kuota acara real-time.
-- **Reports** (`POST /reports/submit`, `PUT /reports/verify`): Moderasi warga.
-- **Geographic** (`GET /geographic/kecamatan`): Resolusi wilayah Surabaya.
-- **Admin** (`POST /admin/seed`): Eksekusi populasi 1000+ data historikal statis (dummy test).
-
----
-
-## 🚀 Panduan Mulai Cepat (Quickstart)
-
-Konsepnya adalah *Zero-Config Setup*—seluruh database SQLite dan server Python akan dibentuk dan dijalankan serentak hanya lewat satu skrip Node.
+Override path:
 
 ```bash
-# 1. Klon repositori
-git clone https://github.com/lustresense/samlekom-wok.git
-cd Figmasimrp
+SIMRP_DB_PATH=./database/runtime/database.db
+```
 
-# 2. Instal seluruh dependensi ekosistem NodeJS Frontend
+Tabel runtime utama:
+
+- `roles`
+- `role_attributes`
+- `kecamatan`
+- `kelurahan`
+- `postal_codes`
+- `kampung_mapping`
+- `users`
+- `events`
+- `event_participation`
+- `event_reports`
+- `xp_kelurahan`
+- `xp_pillar`
+- `audit_logs`
+- `collaboration_requests`
+- `notifications`
+- `certificates`
+- `voucher_catalog`
+- `voucher_redemptions`
+- `sessions`
+- `temporary_adjustments`
+
+Database runtime dan backup tidak boleh masuk Git. `.gitignore` sudah mengecualikan `database/runtime/`, `database/*.db`, dan `database/backups/*.db|*.sql`.
+
+## Quickstart Lokal
+
+```bash
 npm install
-
-# 3. Jalankan server pembangunan gabungan (Vite + Python Backend)
 npm run dev
 ```
 
-> **Akses Portal Development**:
-> - Antarmuka Publik Klien: `http://localhost:5173`
-> - Portal Super Admin Rahasia: `http://localhost:5173/admin` (User: `admin` | Pass: `admin`)
-> - Backend REST Raw: `http://localhost:8000/make-server-32aa5c5c`
+Perintah `npm run dev` menjalankan:
 
----
+- Python API dari `server/main.py`;
+- Vite frontend dari `npm run dev:web`.
 
-## 🛑 Checklist Deployment Production
+URL lokal:
 
-Sebelum kode ini di- *push* dan dijalankan pada infrastruktur server (*bare-metal* atau VPS) resmi Pemerintah Kota Surabaya, pastikan parameter `.env.local` Anda disetel secara ketat:
+- Frontend: `http://localhost:5173`
+- Admin page: `http://localhost:5173/admin`
+- Backend API: `http://127.0.0.1:8000/make-server-32aa5c5c`
 
-- [ ] Pastikan `SIMRP_ENV=production` (*Triggers* Strict CSP, SQLite WAL Mode, menolak akses Origin sembarangan, menonaktifkan *Demo Seeding*).
-- [ ] Ganti `SIMRP_ADMIN_PASSWORD` ke sandi super administrator dengan entalpi ekstrem (>16 karakter acak).
-- [ ] Naikkan profil beban server `SIMRP_PBKDF2_ITERATIONS=600000`.
-- [ ] Perlindungan pencurian cookie dengan menurunkan `SIMRP_SESSION_TTL_HOURS=24`.
-- [ ] Enforce domain dengan mendaftarkan `SIMRP_ALLOWED_ORIGINS=https://simrp.surabaya.go.id`.
-- [ ] Disarankan menyembunyikan port 8000 dari internet publik dan merutekannya (Reverse-Proxy) di belakang *Nginx* berlapis SSL/TLS.
+Development credential:
 
----
+- Jika `SIMRP_ADMIN_LOGIN_PASSWORD`, `SIMRP_DEMO_PASSWORD`, atau `SIMRP_SEED_ADMIN_PASSWORD` tidak diset di development, runtime membuat credential acak dan menulisnya ke `database/runtime/dev_credentials.txt`.
+- Jangan commit file credential runtime.
 
-<p align="center">
-  <b>© 2026 SIMRP - Dinas Komunikasi dan Informatika Kota Surabaya</b><br>
-  <i>"Berdaya dari Warga, Untuk Surabaya Hebat!"</i>
-</p>
+## Environment Penting
+
+Contoh lengkap ada di `.env.example`.
+
+| Env | Fungsi |
+|---|---|
+| `SIMRP_ENV` | `development` atau `production` |
+| `SIMRP_DB_PATH` | Path SQLite runtime |
+| `SIMRP_HOST` | Bind host backend |
+| `SIMRP_PORT` | Port backend |
+| `SIMRP_ADMIN_LOGIN_USERNAME` | Username admin portal |
+| `SIMRP_ADMIN_LOGIN_PASSWORD` | Password admin portal |
+| `SIMRP_ENABLE_DEMO_SEED` | Enable/disable seed demo |
+| `SIMRP_DEMO_PASSWORD` | Password akun demo |
+| `SIMRP_SEED_ADMIN_PASSWORD` | Password seeded admin user |
+| `SIMRP_ALLOWED_ORIGINS` | Allowlist CORS production |
+| `SIMRP_PBKDF2_ITERATIONS` | Iterasi PBKDF2 password hashing |
+| `SIMRP_SESSION_TTL_HOURS` | TTL session token |
+| `SIMRP_MAX_BODY_BYTES` | Batas body JSON |
+| `VITE_API_BASE_URL` | Base URL API untuk frontend |
+
+## Script Penting
+
+```bash
+npm run dev
+npm run dev:web
+npm run api
+npm run build
+```
+
+Windows helper:
+
+```bat
+start_server.bat --check
+backup_database.bat --check
+```
+
+Smoke test:
+
+```bash
+python smoketest.py
+```
+
+Smoke test membaca:
+
+- `SIMRP_SMOKE_BASE`
+- `SIMRP_SMOKE_DEMO_PASSWORD`
+- fallback credential dari `database/runtime/dev_credentials.txt`
+
+## Catatan Frontend
+
+Komponen utama:
+
+- `src/app/App.tsx`: state-based routing, session bootstrap, dashboard switching.
+- `src/lib/api.ts`: centralized API client.
+- `UserDashboard.tsx`: event user, reports, kampung, certificates, rewards, attendance KSH.
+- `ModeratorDashboard.tsx`: report moderation, event create/edit/approval/publish, collaboration review.
+- `AdminDashboard.tsx`: overview admin dan akses ke `AdminGodMode`.
+- `ReportingWizard.tsx`: report submission wizard.
+- `PillarRadarChart.tsx`: radar chart XP empat pilar.
+
+Catatan teknis:
+
+- `src/types/index.ts` masih perlu diselaraskan dengan payload backend aktual.
+- Notification logic masih terduplikasi di desktop/mobile navbar.
+- Certificate download endpoint sudah ada, tetapi UI saat ini baru menampilkan detail/hash.
+
+## Validasi yang Disarankan Sebelum Push
+
+```bash
+python -m py_compile server/main.py server/api/auth.py server/api/events.py server/api/reports.py
+npm run build
+python smoketest.py
+```
+
+Untuk perubahan backup script:
+
+```bat
+backup_database.bat --check
+```
+
+## Production Checklist
+
+- Set `SIMRP_ENV=production`.
+- Set `SIMRP_ADMIN_LOGIN_USERNAME` dan `SIMRP_ADMIN_LOGIN_PASSWORD` dengan credential kuat.
+- Set `SIMRP_ENABLE_DEMO_SEED=false`, kecuali demo seed memang diperlukan.
+- Jika demo seed production aktif, set `SIMRP_DEMO_PASSWORD` dan `SIMRP_SEED_ADMIN_PASSWORD`.
+- Naikkan `SIMRP_PBKDF2_ITERATIONS` sesuai kapasitas server.
+- Set `SIMRP_ALLOWED_ORIGINS` ke domain frontend resmi.
+- Jangan expose database runtime, backup, `.env`, atau `dev_credentials.txt`.
+- Jalankan backend di belakang reverse proxy TLS jika dipublish ke internet.
+
+## File yang Sengaja Tidak Dipush
+
+Local AI/editor instruction mirrors, audit handoff reports, runtime DB, backup DB, logs, dan env lokal di-ignore supaya tidak ikut `git add .`.
+
+Contoh:
+
+- `.ai_rules`
+- `.ai_security_manifesto.md`
+- `.github/copilot-instructions.md`
+- `AGENTS.md`
+- `AI_HANDOFF_REPORT.md`
+- `PROJECT_STRUCTURE_AUDIT.md`
+- `database/runtime/`
+- `database/backups/*.db`
+- `database/backups/*.sql`

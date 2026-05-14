@@ -1,4 +1,5 @@
 # Environment files
+.env
 .env.local
 .env.*
 !.env.example
@@ -10,15 +11,14 @@ package-lock.json
 # Build output
 dist/
 
-# Database - runtime files excluded, backups allowed
+# Database - runtime and backup files excluded
 database/runtime/
 database/*.db
 database/*.db-journal
 database/*.db-wal
 database/*.db-shm
-!database/backups/
-!database/backups/*.sql
-!database/backups/*.db
+database/backups/*.db
+database/backups/*.sql
 
 # Python
 server/__pycache__/
@@ -55,6 +55,26 @@ logs/
 *.tmp
 *.temp
 .cache/
+
+# AI Security Manifesto local master can be ignored if it ever contains private additions.
+# .ai_security_manifesto.md
+
+# Local AI/editor instruction mirrors
+.ai_rules
+.ai_security_manifesto.md
+.clinerules
+.continuecontext
+.cursorrules
+.augment/
+.cody/
+.zed/
+.github/copilot-instructions.md
+AGENTS.md
+security-agent.ts
+
+# Local audit handoff reports
+AI_HANDOFF_REPORT.md
+PROJECT_STRUCTURE_AUDIT.md
 
 # Testing
 coverage/
